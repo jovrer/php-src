@@ -2,13 +2,6 @@
 Test strspn() function : usage variations - with heredoc strings, varying start and len args
 --FILE--
 <?php
-/* Prototype  : proto int strspn(string str, string mask [, int start [, int len]])
- * Description: Finds length of initial segment consisting entirely of characters found in mask.
-                If start or/and length is provided works like strspn(substr($s,$start,$len),$good_chars)
- * Source code: ext/standard/string.c
- * Alias to functions: none
-*/
-
 /*
 * Testing strspn() : with heredoc string, varying start and len arguments
 */
@@ -63,33 +56,33 @@ $heredoc_strings = array(
 
 // defining array of different mask strings
 $mask_array = array(
-		    "",
-		    '',
-		    "f\n\\0htersti \l",
-		    "\t",
-		    "het\ ",
-		    "fel\th\ ",
+            "",
+            '',
+            "f\n\\0htersti \l",
+            "\t",
+            "het\ ",
+            "fel\th\ ",
                     "f\t\hiel\100\xaa"
                    );
 
 // defining array of different start values
 $start_array = array(
-		    0,
-		    1,
- 	            2,
-		    -1,
-		    2147483647,  // max positive integer
-		    -2147483648,  // min negative integer
+            0,
+            1,
+                2,
+            -1,
+            2147483647,  // max positive integer
+            -2147483648,  // min negative integer
                    );
 
 // defining array of different len values
 $len_array = array(
-		    0,
-		    1,
- 	            2,
-		    -1,
-		    2147483647,  // max positive integer
-		    -2147483648,  // min negative integer
+            0,
+            1,
+                2,
+            -1,
+            2147483647,  // max positive integer
+            -2147483648,  // min negative integer
                    );
 
 

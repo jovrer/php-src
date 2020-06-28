@@ -8,11 +8,6 @@ if (PHP_INT_SIZE != 4) die("skip this test is for 32bit platform only");
 ?>
 --FILE--
 <?php
-/* Prototype  : string decoct  ( int $number  )
- * Description: Returns a string containing an octal representation of the given number argument.
- * Source code: ext/standard/math.c
- */
-
 echo "*** Testing decoct() : usage variations ***\n";
 //get an unset variable
 $unset_var = 10;
@@ -85,13 +80,12 @@ $inputs = array(
 // loop through each element of $inputs to check the behaviour of decoct()
 $iterator = 1;
 foreach($inputs as $input) {
-	echo "\n-- Iteration $iterator --\n";
-	var_dump(decoct($input));
-	$iterator++;
+    echo "\n-- Iteration $iterator --\n";
+    var_dump(decoct($input));
+    $iterator++;
 };
 fclose($fp);
 ?>
-===Done===
 --EXPECTF--
 *** Testing decoct() : usage variations ***
 
@@ -177,4 +171,3 @@ string(1) "0"
 
 -- Iteration 27 --
 string(%d) "%d"
-===Done===

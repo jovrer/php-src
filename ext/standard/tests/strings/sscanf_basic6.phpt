@@ -9,11 +9,6 @@ if (PHP_INT_SIZE != 4) {
 --FILE--
 <?php
 
-/* Prototype  : mixed sscanf  ( string $str  , string $format  [, mixed &$...  ] )
- * Description: Parses input from a string according to a format
- * Source code: ext/standard/string.c
-*/
-
 echo "*** Testing sscanf() : basic functionality - using unsigned format ***\n";
 
 $str = "-11 +11 11 -11.234 +11.234 11.234";
@@ -30,7 +25,6 @@ $res = sscanf($str, $format, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6);
 var_dump($res, $arg1, $arg2, $arg3, $arg4, $arg5, $arg6);
 
 ?>
-===DONE===
 --EXPECT--
 *** Testing sscanf() : basic functionality - using unsigned format ***
 
@@ -50,4 +44,3 @@ int(11)
 string(10) "4294967285"
 NULL
 NULL
-===DONE===

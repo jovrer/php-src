@@ -1,7 +1,5 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
@@ -29,6 +27,7 @@
 #include "zend_exceptions.h"
 
 #include "php_spl.h"
+#include "spl_array_arginfo.h"
 #include "spl_functions.h"
 #include "spl_engine.h"
 #include "spl_iterators.h"
@@ -162,8 +161,6 @@ static void spl_array_object_free_storage(zend_object *object)
 }
 /* }}} */
 
-zend_object_iterator *spl_array_get_iterator(zend_class_entry *ce, zval *object, int by_ref);
-
 /* {{{ spl_array_object_new_ex */
 static zend_object *spl_array_object_new_ex(zend_class_entry *class_type, zend_object *orig, int clone_orig)
 {
@@ -192,13 +189,11 @@ static zend_object *spl_array_object_new_ex(zend_class_entry *class_type, zend_o
 					zend_array_dup(spl_array_get_hash_table(other)));
 			} else {
 				ZEND_ASSERT(orig->handlers == &spl_handler_ArrayIterator);
-				GC_ADDREF(orig);
-				ZVAL_OBJ(&intern->array, orig);
+				ZVAL_OBJ_COPY(&intern->array, orig);
 				intern->ar_flags |= SPL_ARRAY_USE_OTHER;
 			}
 		} else {
-			GC_ADDREF(orig);
-			ZVAL_OBJ(&intern->array, orig);
+			ZVAL_OBJ_COPY(&intern->array, orig);
 			intern->ar_flags |= SPL_ARRAY_USE_OTHER;
 		}
 	} else {
@@ -350,7 +345,7 @@ fetch_dim_string:
 		}
 		return retval;
 	case IS_RESOURCE:
-		zend_error(E_NOTICE, "Resource ID#%d used as offset, casting to integer (%d)", Z_RES_P(offset)->handle, Z_RES_P(offset)->handle);
+		zend_error(E_WARNING, "Resource ID#%d used as offset, casting to integer (%d)", Z_RES_P(offset)->handle, Z_RES_P(offset)->handle);
 		index = Z_RES_P(offset)->handle;
 		goto num_index;
 	case IS_DOUBLE:
@@ -701,11 +696,11 @@ static int spl_array_has_dimension(zend_object *object, zval *offset, int check_
 /* {{{ proto bool ArrayObject::offsetExists(mixed $index)
        proto bool ArrayIterator::offsetExists(mixed $index)
    Returns whether the requested $index exists. */
-SPL_METHOD(Array, offsetExists)
+PHP_METHOD(ArrayObject, offsetExists)
 {
 	zval *index;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &index) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	RETURN_BOOL(spl_array_has_dimension_ex(0, Z_OBJ_P(ZEND_THIS), index, 2));
 } /* }}} */
@@ -713,11 +708,11 @@ SPL_METHOD(Array, offsetExists)
 /* {{{ proto mixed ArrayObject::offsetGet(mixed $index)
        proto mixed ArrayIterator::offsetGet(mixed $index)
    Returns the value at the specified $index. */
-SPL_METHOD(Array, offsetGet)
+PHP_METHOD(ArrayObject, offsetGet)
 {
 	zval *value, *index;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &index) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	value = spl_array_read_dimension_ex(0, Z_OBJ_P(ZEND_THIS), index, BP_VAR_R, return_value);
 	if (value != return_value) {
@@ -728,11 +723,11 @@ SPL_METHOD(Array, offsetGet)
 /* {{{ proto void ArrayObject::offsetSet(mixed $index, mixed $newval)
        proto void ArrayIterator::offsetSet(mixed $index, mixed $newval)
    Sets the value at the specified $index to $newval. */
-SPL_METHOD(Array, offsetSet)
+PHP_METHOD(ArrayObject, offsetSet)
 {
 	zval *index, *value;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "zz", &index, &value) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	spl_array_write_dimension_ex(0, Z_OBJ_P(ZEND_THIS), index, value);
 } /* }}} */
@@ -752,12 +747,12 @@ void spl_array_iterator_append(zval *object, zval *append_value) /* {{{ */
 /* {{{ proto void ArrayObject::append(mixed $newval)
        proto void ArrayIterator::append(mixed $newval)
    Appends the value (cannot be called for objects). */
-SPL_METHOD(Array, append)
+PHP_METHOD(ArrayObject, append)
 {
 	zval *value;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &value) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	spl_array_iterator_append(ZEND_THIS, value);
 } /* }}} */
@@ -765,11 +760,11 @@ SPL_METHOD(Array, append)
 /* {{{ proto void ArrayObject::offsetUnset(mixed $index)
        proto void ArrayIterator::offsetUnset(mixed $index)
    Unsets the value at the specified $index. */
-SPL_METHOD(Array, offsetUnset)
+PHP_METHOD(ArrayObject, offsetUnset)
 {
 	zval *index;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &index) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	spl_array_unset_dimension_ex(0, Z_OBJ_P(ZEND_THIS), index);
 } /* }}} */
@@ -777,10 +772,14 @@ SPL_METHOD(Array, offsetUnset)
 /* {{{ proto array ArrayObject::getArrayCopy()
       proto array ArrayIterator::getArrayCopy()
    Return a copy of the contained array */
-SPL_METHOD(Array, getArrayCopy)
+PHP_METHOD(ArrayObject, getArrayCopy)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
+
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
+	}
 
 	RETURN_ARR(zend_array_dup(spl_array_get_hash_table(intern)));
 } /* }}} */
@@ -806,7 +805,6 @@ static HashTable *spl_array_get_properties_for(zend_object *object, zend_prop_pu
 			break;
 		case ZEND_PROP_PURPOSE_VAR_EXPORT:
 		case ZEND_PROP_PURPOSE_JSON:
-		case _ZEND_PROP_PURPOSE_ARRAY_KEY_EXISTS:
 			dup = 0;
 			break;
 		default:
@@ -822,7 +820,7 @@ static HashTable *spl_array_get_properties_for(zend_object *object, zend_prop_pu
 	return ht;
 } /* }}} */
 
-static HashTable* spl_array_get_debug_info(zend_object *obj, int *is_temp) /* {{{ */
+static inline HashTable* spl_array_get_debug_info(zend_object *obj) /* {{{ */
 {
 	zval *storage;
 	zend_string *zname;
@@ -834,11 +832,9 @@ static HashTable* spl_array_get_debug_info(zend_object *obj, int *is_temp) /* {{
 	}
 
 	if (intern->ar_flags & SPL_ARRAY_IS_SELF) {
-		*is_temp = 0;
-		return intern->std.properties;
+		return zend_array_dup(intern->std.properties);
 	} else {
 		HashTable *debug_info;
-		*is_temp = 1;
 
 		debug_info = zend_new_array(zend_hash_num_elements(intern->std.properties) + 1);
 		zend_hash_copy(debug_info, intern->std.properties, (copy_ctor_func_t) zval_add_ref);
@@ -945,6 +941,8 @@ static int spl_array_compare_objects(zval *o1, zval *o2) /* {{{ */
 	spl_array_object	*intern1,
 						*intern2;
 	int					result	= 0;
+
+	ZEND_COMPARE_OBJECTS_FALLBACK(o1, o2);
 
 	intern1	= Z_SPLARRAY_P(o1);
 	intern2	= Z_SPLARRAY_P(o2);
@@ -1173,7 +1171,7 @@ zend_object_iterator *spl_array_get_iterator(zend_class_entry *ce, zval *object,
 
 	zend_iterator_init(&iterator->it);
 
-	ZVAL_COPY(&iterator->it.data, object);
+	ZVAL_OBJ_COPY(&iterator->it.data, Z_OBJ_P(object));
 	iterator->it.funcs = &spl_array_it_funcs;
 	iterator->ce = ce;
 	ZVAL_UNDEF(&iterator->value);
@@ -1184,7 +1182,7 @@ zend_object_iterator *spl_array_get_iterator(zend_class_entry *ce, zval *object,
 
 /* {{{ proto ArrayObject::__construct([array|object ar = array() [, int flags = 0 [, string iterator_class = "ArrayIterator"]]])
    Constructs a new array object from an array or object. */
-SPL_METHOD(Array, __construct)
+PHP_METHOD(ArrayObject, __construct)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern;
@@ -1196,8 +1194,8 @@ SPL_METHOD(Array, __construct)
 		return; /* nothing to do */
 	}
 
-	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "z|lC", &array, &ar_flags, &ce_get_iterator) == FAILURE) {
-		return;
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|zlC", &array, &ar_flags, &ce_get_iterator) == FAILURE) {
+		RETURN_THROWS();
 	}
 
 	intern = Z_SPLARRAY_P(object);
@@ -1214,7 +1212,7 @@ SPL_METHOD(Array, __construct)
 
 /* {{{ proto ArrayIterator::__construct([array|object ar = array() [, int flags = 0]])
    Constructs a new array iterator from an array or object. */
-SPL_METHOD(ArrayIterator, __construct)
+PHP_METHOD(ArrayIterator, __construct)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern;
@@ -1225,8 +1223,8 @@ SPL_METHOD(ArrayIterator, __construct)
 		return; /* nothing to do */
 	}
 
-	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "z|l", &array, &ar_flags) == FAILURE) {
-		return;
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "|zl", &array, &ar_flags) == FAILURE) {
+		RETURN_THROWS();
 	}
 
 	intern = Z_SPLARRAY_P(object);
@@ -1239,7 +1237,7 @@ SPL_METHOD(ArrayIterator, __construct)
 
 /* {{{ proto void ArrayObject::setIteratorClass(string iterator_class)
    Set the class used in getIterator. */
-SPL_METHOD(Array, setIteratorClass)
+PHP_METHOD(ArrayObject, setIteratorClass)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
@@ -1255,13 +1253,13 @@ SPL_METHOD(Array, setIteratorClass)
 
 /* {{{ proto string ArrayObject::getIteratorClass()
    Get the class used in getIterator. */
-SPL_METHOD(Array, getIteratorClass)
+PHP_METHOD(ArrayObject, getIteratorClass)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	zend_string_addref(intern->ce_get_iterator->name);
@@ -1271,13 +1269,13 @@ SPL_METHOD(Array, getIteratorClass)
 
 /* {{{ proto int ArrayObject::getFlags()
    Get flags */
-SPL_METHOD(Array, getFlags)
+PHP_METHOD(ArrayObject, getFlags)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	RETURN_LONG(intern->ar_flags & ~SPL_ARRAY_INT_MASK);
@@ -1286,29 +1284,29 @@ SPL_METHOD(Array, getFlags)
 
 /* {{{ proto void ArrayObject::setFlags(int flags)
    Set flags */
-SPL_METHOD(Array, setFlags)
+PHP_METHOD(ArrayObject, setFlags)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 	zend_long ar_flags = 0;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &ar_flags) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	intern->ar_flags = (intern->ar_flags & SPL_ARRAY_INT_MASK) | (ar_flags & ~SPL_ARRAY_INT_MASK);
 }
 /* }}} */
 
-/* {{{ proto Array|Object ArrayObject::exchangeArray(Array|Object ar = array())
+/* {{{ proto Array|Object ArrayObject::exchangeArray(Array|Object input = array())
    Replace the referenced array or object with a new one and return the old one (right now copy - to be changed) */
-SPL_METHOD(Array, exchangeArray)
+PHP_METHOD(ArrayObject, exchangeArray)
 {
 	zval *object = ZEND_THIS, *array;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "z", &array) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if (intern->nApplyCount > 0) {
@@ -1323,28 +1321,28 @@ SPL_METHOD(Array, exchangeArray)
 
 /* {{{ proto ArrayIterator ArrayObject::getIterator()
    Create a new iterator from a ArrayObject instance */
-SPL_METHOD(Array, getIterator)
+PHP_METHOD(ArrayObject, getIterator)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
-	ZVAL_OBJ(return_value, spl_array_object_new_ex(intern->ce_get_iterator, Z_OBJ_P(object), 0));
+	RETURN_OBJ(spl_array_object_new_ex(intern->ce_get_iterator, Z_OBJ_P(object), 0));
 }
 /* }}} */
 
 /* {{{ proto void ArrayIterator::rewind()
    Rewind array back to the start */
-SPL_METHOD(Array, rewind)
+PHP_METHOD(ArrayIterator, rewind)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	spl_array_rewind(intern);
@@ -1353,7 +1351,7 @@ SPL_METHOD(Array, rewind)
 
 /* {{{ proto void ArrayIterator::seek(int $position)
    Seek to position. */
-SPL_METHOD(Array, seek)
+PHP_METHOD(ArrayIterator, seek)
 {
 	zend_long opos, position;
 	zval *object = ZEND_THIS;
@@ -1362,7 +1360,7 @@ SPL_METHOD(Array, seek)
 	int result;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &position) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	opos = position;
@@ -1423,12 +1421,12 @@ int spl_array_object_count_elements(zend_object *object, zend_long *count) /* {{
 /* {{{ proto int ArrayObject::count()
        proto int ArrayIterator::count()
    Return the number of elements in the Iterator. */
-SPL_METHOD(Array, count)
+PHP_METHOD(ArrayObject, count)
 {
 	spl_array_object *intern = Z_SPLARRAY_P(ZEND_THIS);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	RETURN_LONG(spl_array_object_count_elements_helper(intern));
@@ -1487,7 +1485,7 @@ exit:
 } /* }}} */
 
 #define SPL_ARRAY_METHOD(cname, fname, use_arg) \
-SPL_METHOD(cname, fname) \
+PHP_METHOD(cname, fname) \
 { \
 	spl_array_method(INTERNAL_FUNCTION_PARAM_PASSTHRU, #fname, sizeof(#fname)-1, use_arg); \
 }
@@ -1495,36 +1493,36 @@ SPL_METHOD(cname, fname) \
 /* {{{ proto int ArrayObject::asort([int $sort_flags = SORT_REGULAR ])
        proto int ArrayIterator::asort([int $sort_flags = SORT_REGULAR ])
    Sort the entries by values. */
-SPL_ARRAY_METHOD(Array, asort, SPL_ARRAY_METHOD_MAY_USER_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, asort, SPL_ARRAY_METHOD_MAY_USER_ARG) /* }}} */
 
 /* {{{ proto int ArrayObject::ksort([int $sort_flags = SORT_REGULAR ])
        proto int ArrayIterator::ksort([int $sort_flags = SORT_REGULAR ])
    Sort the entries by key. */
-SPL_ARRAY_METHOD(Array, ksort, SPL_ARRAY_METHOD_MAY_USER_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, ksort, SPL_ARRAY_METHOD_MAY_USER_ARG) /* }}} */
 
 /* {{{ proto int ArrayObject::uasort(callback cmp_function)
        proto int ArrayIterator::uasort(callback cmp_function)
    Sort the entries by values user defined function. */
-SPL_ARRAY_METHOD(Array, uasort, SPL_ARRAY_METHOD_USE_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, uasort, SPL_ARRAY_METHOD_USE_ARG) /* }}} */
 
 /* {{{ proto int ArrayObject::uksort(callback cmp_function)
        proto int ArrayIterator::uksort(callback cmp_function)
    Sort the entries by key using user defined function. */
-SPL_ARRAY_METHOD(Array, uksort, SPL_ARRAY_METHOD_USE_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, uksort, SPL_ARRAY_METHOD_USE_ARG) /* }}} */
 
 /* {{{ proto int ArrayObject::natsort()
        proto int ArrayIterator::natsort()
    Sort the entries by values using "natural order" algorithm. */
-SPL_ARRAY_METHOD(Array, natsort, SPL_ARRAY_METHOD_NO_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, natsort, SPL_ARRAY_METHOD_NO_ARG) /* }}} */
 
 /* {{{ proto int ArrayObject::natcasesort()
        proto int ArrayIterator::natcasesort()
    Sort the entries by key using case insensitive "natural order" algorithm. */
-SPL_ARRAY_METHOD(Array, natcasesort, SPL_ARRAY_METHOD_NO_ARG) /* }}} */
+SPL_ARRAY_METHOD(ArrayObject, natcasesort, SPL_ARRAY_METHOD_NO_ARG) /* }}} */
 
 /* {{{ proto mixed|NULL ArrayIterator::current()
    Return current array entry */
-SPL_METHOD(Array, current)
+PHP_METHOD(ArrayIterator, current)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
@@ -1532,7 +1530,7 @@ SPL_METHOD(Array, current)
 	HashTable *aht = spl_array_get_hash_table(intern);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if ((entry = zend_hash_get_current_data_ex(aht, spl_array_get_pos_ptr(aht, intern))) == NULL) {
@@ -1550,10 +1548,10 @@ SPL_METHOD(Array, current)
 
 /* {{{ proto mixed|NULL ArrayIterator::key()
    Return current array key */
-SPL_METHOD(Array, key)
+PHP_METHOD(ArrayIterator, key)
 {
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	spl_array_iterator_key(ZEND_THIS, return_value);
@@ -1570,14 +1568,14 @@ void spl_array_iterator_key(zval *object, zval *return_value) /* {{{ */
 
 /* {{{ proto void ArrayIterator::next()
    Move to next entry */
-SPL_METHOD(Array, next)
+PHP_METHOD(ArrayIterator, next)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 	HashTable *aht = spl_array_get_hash_table(intern);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	spl_array_next_ex(intern, aht);
@@ -1586,14 +1584,14 @@ SPL_METHOD(Array, next)
 
 /* {{{ proto bool ArrayIterator::valid()
    Check whether array contains more entries */
-SPL_METHOD(Array, valid)
+PHP_METHOD(ArrayIterator, valid)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 	HashTable *aht = spl_array_get_hash_table(intern);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	RETURN_BOOL(zend_hash_has_more_elements_ex(aht, spl_array_get_pos_ptr(aht, intern)) == SUCCESS);
@@ -1602,14 +1600,14 @@ SPL_METHOD(Array, valid)
 
 /* {{{ proto bool RecursiveArrayIterator::hasChildren()
    Check whether current element has children (e.g. is an array) */
-SPL_METHOD(Array, hasChildren)
+PHP_METHOD(RecursiveArrayIterator, hasChildren)
 {
 	zval *object = ZEND_THIS, *entry;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 	HashTable *aht = spl_array_get_hash_table(intern);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if ((entry = zend_hash_get_current_data_ex(aht, spl_array_get_pos_ptr(aht, intern))) == NULL) {
@@ -1627,14 +1625,14 @@ SPL_METHOD(Array, hasChildren)
 
 /* {{{ proto object RecursiveArrayIterator::getChildren()
    Create a sub iterator for the current element (same class as $this) */
-SPL_METHOD(Array, getChildren)
+PHP_METHOD(RecursiveArrayIterator, getChildren)
 {
 	zval *object = ZEND_THIS, *entry, flags;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
 	HashTable *aht = spl_array_get_hash_table(intern);
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if ((entry = zend_hash_get_current_data_ex(aht, spl_array_get_pos_ptr(aht, intern))) == NULL) {
@@ -1651,9 +1649,7 @@ SPL_METHOD(Array, getChildren)
 			return;
 		}
 		if (instanceof_function(Z_OBJCE_P(entry), Z_OBJCE_P(ZEND_THIS))) {
-			ZVAL_OBJ(return_value, Z_OBJ_P(entry));
-			Z_ADDREF_P(return_value);
-			return;
+			RETURN_OBJ_COPY(Z_OBJ_P(entry));
 		}
 	}
 
@@ -1664,7 +1660,7 @@ SPL_METHOD(Array, getChildren)
 
 /* {{{ proto string ArrayObject::serialize()
    Serialize the object */
-SPL_METHOD(Array, serialize)
+PHP_METHOD(ArrayObject, serialize)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
@@ -1673,7 +1669,7 @@ SPL_METHOD(Array, serialize)
 	smart_str buf = {0};
 
 	if (zend_parse_parameters_none() == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	PHP_VAR_SERIALIZE_INIT(var_hash);
@@ -1702,17 +1698,13 @@ SPL_METHOD(Array, serialize)
 	/* done */
 	PHP_VAR_SERIALIZE_DESTROY(var_hash);
 
-	if (buf.s) {
-		RETURN_NEW_STR(buf.s);
-	}
-
-	RETURN_NULL();
+	RETURN_NEW_STR(buf.s);
 } /* }}} */
 
 /* {{{ proto void ArrayObject::unserialize(string serialized)
  * unserialize the object
  */
-SPL_METHOD(Array, unserialize)
+PHP_METHOD(ArrayObject, unserialize)
 {
 	zval *object = ZEND_THIS;
 	spl_array_object *intern = Z_SPLARRAY_P(object);
@@ -1725,7 +1717,7 @@ SPL_METHOD(Array, unserialize)
 	zend_long flags;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s", &buf, &buf_len) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if (buf_len == 0) {
@@ -1819,18 +1811,18 @@ SPL_METHOD(Array, unserialize)
 outexcept:
 	PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
 	zend_throw_exception_ex(spl_ce_UnexpectedValueException, 0, "Error at offset " ZEND_LONG_FMT " of %zd bytes", (zend_long)((char*)p - buf), buf_len);
-	return;
+	RETURN_THROWS();
 
 } /* }}} */
 
 /* {{{ proto array ArrayObject::__serialize() */
-SPL_METHOD(Array, __serialize)
+PHP_METHOD(ArrayObject, __serialize)
 {
 	spl_array_object *intern = Z_SPLARRAY_P(ZEND_THIS);
 	zval tmp;
 
-	if (zend_parse_parameters_none_throw() == FAILURE) {
-		return;
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
 	}
 
 	array_init(return_value);
@@ -1851,30 +1843,42 @@ SPL_METHOD(Array, __serialize)
 	ZVAL_ARR(&tmp, zend_std_get_properties(&intern->std));
 	Z_TRY_ADDREF(tmp);
 	zend_hash_next_index_insert(Z_ARRVAL_P(return_value), &tmp);
+
+	/* iterator class */
+	if (intern->ce_get_iterator == spl_ce_ArrayIterator) {
+		ZVAL_NULL(&tmp);
+	} else {
+		ZVAL_STR_COPY(&tmp, intern->ce_get_iterator->name);
+	}
+	zend_hash_next_index_insert(Z_ARRVAL_P(return_value), &tmp);
 }
 /* }}} */
 
 
 /* {{{ proto void ArrayObject::__unserialize(array data) */
-SPL_METHOD(Array, __unserialize)
+PHP_METHOD(ArrayObject, __unserialize)
 {
 	spl_array_object *intern = Z_SPLARRAY_P(ZEND_THIS);
 	HashTable *data;
-	zval *flags_zv, *storage_zv, *members_zv;
+	zval *flags_zv, *storage_zv, *members_zv, *iterator_class_zv;
 	zend_long flags;
 
-	if (zend_parse_parameters_throw(ZEND_NUM_ARGS(), "h", &data) == FAILURE) {
-		return;
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "h", &data) == FAILURE) {
+		RETURN_THROWS();
 	}
 
-	flags_zv = zend_hash_index_find(data, 0);
-	storage_zv = zend_hash_index_find(data, 1);
-	members_zv = zend_hash_index_find(data, 2);
+	flags_zv          = zend_hash_index_find(data, 0);
+	storage_zv        = zend_hash_index_find(data, 1);
+	members_zv        = zend_hash_index_find(data, 2);
+	iterator_class_zv = zend_hash_index_find(data, 3);
+
 	if (!flags_zv || !storage_zv || !members_zv ||
-			Z_TYPE_P(flags_zv) != IS_LONG || Z_TYPE_P(members_zv) != IS_ARRAY) {
+			Z_TYPE_P(flags_zv) != IS_LONG || Z_TYPE_P(members_zv) != IS_ARRAY ||
+			(iterator_class_zv && (Z_TYPE_P(iterator_class_zv) != IS_NULL &&
+				Z_TYPE_P(iterator_class_zv) != IS_STRING))) {
 		zend_throw_exception(spl_ce_UnexpectedValueException,
 			"Incomplete or ill-typed serialization data", 0);
-		return;
+		RETURN_THROWS();
 	}
 
 	flags = Z_LVAL_P(flags_zv);
@@ -1884,143 +1888,48 @@ SPL_METHOD(Array, __unserialize)
 	if (flags & SPL_ARRAY_IS_SELF) {
 		zval_ptr_dtor(&intern->array);
 		ZVAL_UNDEF(&intern->array);
-	} else if (Z_TYPE_P(storage_zv) == IS_ARRAY) {
-		zval_ptr_dtor(&intern->array);
-		ZVAL_COPY_VALUE(&intern->array, storage_zv);
-		ZVAL_NULL(storage_zv);
-		SEPARATE_ARRAY(&intern->array);
 	} else {
 		spl_array_set_array(ZEND_THIS, intern, storage_zv, 0L, 1);
 	}
 
 	object_properties_load(&intern->std, Z_ARRVAL_P(members_zv));
+
+	if (iterator_class_zv && Z_TYPE_P(iterator_class_zv) == IS_STRING) {
+		zend_class_entry *ce = zend_lookup_class(Z_STR_P(iterator_class_zv));
+
+		if (!ce) {
+			zend_throw_exception_ex(spl_ce_UnexpectedValueException, 0,
+				"Cannot deserialize ArrayObject with iterator class '%s'; no such class exists",
+				ZSTR_VAL(Z_STR_P(iterator_class_zv)));
+			RETURN_THROWS();
+		}
+
+		if (!instanceof_function(ce, spl_ce_Iterator)) {
+			zend_throw_exception_ex(spl_ce_UnexpectedValueException, 0,
+				"Cannot deserialize ArrayObject with iterator class '%s'; this class does not implement the Iterator interface",
+				ZSTR_VAL(Z_STR_P(iterator_class_zv)));
+			RETURN_THROWS();
+		}
+
+		intern->ce_get_iterator = ce;
+	}
 }
 /* }}} */
 
-/* {{{ arginfo and function table */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_array___construct, 0, 0, 0)
-	ZEND_ARG_INFO(0, input)
-	ZEND_ARG_INFO(0, flags)
-	ZEND_ARG_INFO(0, iterator_class)
-ZEND_END_ARG_INFO()
+/* {{{ proto void Array::__debugInfo() */
+PHP_METHOD(ArrayObject, __debugInfo)
+{
+	if (zend_parse_parameters_none() == FAILURE) {
+		return;
+	}
 
-/* ArrayIterator::__construct and ArrayObject::__construct have different signatures */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_array_iterator___construct, 0, 0, 0)
-	ZEND_ARG_INFO(0, array)
-	ZEND_ARG_INFO(0, ar_flags)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_array_offsetGet, 0, 0, 1)
-	ZEND_ARG_INFO(0, index)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_array_offsetSet, 0, 0, 2)
-	ZEND_ARG_INFO(0, index)
-	ZEND_ARG_INFO(0, newval)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_append, 0)
-	ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_seek, 0)
-	ZEND_ARG_INFO(0, position)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_exchangeArray, 0)
-	ZEND_ARG_INFO(0, array)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_setFlags, 0)
-	ZEND_ARG_INFO(0, flags)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_setIteratorClass, 0)
-	ZEND_ARG_INFO(0, iteratorClass)
-ZEND_END_ARG_INFO()
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_uXsort, 0)
-	ZEND_ARG_INFO(0, cmp_function)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_unserialize, 0)
-	ZEND_ARG_INFO(0, serialized)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO(arginfo_array_void, 0)
-ZEND_END_ARG_INFO()
-
-static const zend_function_entry spl_funcs_ArrayObject[] = {
-	SPL_ME(Array, __construct,      arginfo_array___construct,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetExists,     arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetGet,        arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetSet,        arginfo_array_offsetSet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetUnset,      arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, append,           arginfo_array_append,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getArrayCopy,     arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, count,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getFlags,         arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, setFlags,         arginfo_array_setFlags,         ZEND_ACC_PUBLIC)
-	SPL_ME(Array, asort,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, ksort,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, uasort,           arginfo_array_uXsort,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, uksort,           arginfo_array_uXsort,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, natsort,          arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, natcasesort,      arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, unserialize,      arginfo_array_unserialize,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, serialize,        arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, __unserialize,    arginfo_array_unserialize,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, __serialize,      arginfo_array_void,             ZEND_ACC_PUBLIC)
-	/* ArrayObject specific */
-	SPL_ME(Array, getIterator,      arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, exchangeArray,    arginfo_array_exchangeArray,    ZEND_ACC_PUBLIC)
-	SPL_ME(Array, setIteratorClass, arginfo_array_setIteratorClass, ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getIteratorClass, arginfo_array_void,             ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
-
-static const zend_function_entry spl_funcs_ArrayIterator[] = {
-	SPL_ME(ArrayIterator, __construct, arginfo_array_iterator___construct,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetExists,     arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetGet,        arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetSet,        arginfo_array_offsetSet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, offsetUnset,      arginfo_array_offsetGet,        ZEND_ACC_PUBLIC)
-	SPL_ME(Array, append,           arginfo_array_append,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getArrayCopy,     arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, count,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getFlags,         arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, setFlags,         arginfo_array_setFlags,         ZEND_ACC_PUBLIC)
-	SPL_ME(Array, asort,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, ksort,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, uasort,           arginfo_array_uXsort,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, uksort,           arginfo_array_uXsort,           ZEND_ACC_PUBLIC)
-	SPL_ME(Array, natsort,          arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, natcasesort,      arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, unserialize,      arginfo_array_unserialize,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, serialize,        arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, __unserialize,    arginfo_array_unserialize,      ZEND_ACC_PUBLIC)
-	SPL_ME(Array, __serialize,      arginfo_array_void,             ZEND_ACC_PUBLIC)
-	/* ArrayIterator specific */
-	SPL_ME(Array, rewind,           arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, current,          arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, key,              arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, next,             arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, valid,            arginfo_array_void,             ZEND_ACC_PUBLIC)
-	SPL_ME(Array, seek,             arginfo_array_seek,             ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
-
-static const zend_function_entry spl_funcs_RecursiveArrayIterator[] = {
-	SPL_ME(Array, hasChildren,   arginfo_array_void, ZEND_ACC_PUBLIC)
-	SPL_ME(Array, getChildren,   arginfo_array_void, ZEND_ACC_PUBLIC)
-	PHP_FE_END
-};
-/* }}} */
+	RETURN_ARR(spl_array_get_debug_info(Z_OBJ_P(ZEND_THIS)));
+} /* }}} */
 
 /* {{{ PHP_MINIT_FUNCTION(spl_array) */
 PHP_MINIT_FUNCTION(spl_array)
 {
-	REGISTER_SPL_STD_CLASS_EX(ArrayObject, spl_array_object_new, spl_funcs_ArrayObject);
+	REGISTER_SPL_STD_CLASS_EX(ArrayObject, spl_array_object_new, class_ArrayObject_methods);
 	REGISTER_SPL_IMPLEMENTS(ArrayObject, Aggregate);
 	REGISTER_SPL_IMPLEMENTS(ArrayObject, ArrayAccess);
 	REGISTER_SPL_IMPLEMENTS(ArrayObject, Serializable);
@@ -2037,7 +1946,6 @@ PHP_MINIT_FUNCTION(spl_array)
 	spl_handler_ArrayObject.count_elements = spl_array_object_count_elements;
 
 	spl_handler_ArrayObject.get_properties_for = spl_array_get_properties_for;
-	spl_handler_ArrayObject.get_debug_info = spl_array_get_debug_info;
 	spl_handler_ArrayObject.get_gc = spl_array_get_gc;
 	spl_handler_ArrayObject.read_property = spl_array_read_property;
 	spl_handler_ArrayObject.write_property = spl_array_write_property;
@@ -2045,11 +1953,11 @@ PHP_MINIT_FUNCTION(spl_array)
 	spl_handler_ArrayObject.has_property = spl_array_has_property;
 	spl_handler_ArrayObject.unset_property = spl_array_unset_property;
 
-	spl_handler_ArrayObject.compare_objects = spl_array_compare_objects;
+	spl_handler_ArrayObject.compare = spl_array_compare_objects;
 	spl_handler_ArrayObject.dtor_obj = zend_objects_destroy_object;
 	spl_handler_ArrayObject.free_obj = spl_array_object_free_storage;
 
-	REGISTER_SPL_STD_CLASS_EX(ArrayIterator, spl_array_object_new, spl_funcs_ArrayIterator);
+	REGISTER_SPL_STD_CLASS_EX(ArrayIterator, spl_array_object_new, class_ArrayIterator_methods);
 	REGISTER_SPL_IMPLEMENTS(ArrayIterator, Iterator);
 	REGISTER_SPL_IMPLEMENTS(ArrayIterator, ArrayAccess);
 	REGISTER_SPL_IMPLEMENTS(ArrayIterator, SeekableIterator);
@@ -2066,7 +1974,7 @@ PHP_MINIT_FUNCTION(spl_array)
 	REGISTER_SPL_CLASS_CONST_LONG(ArrayIterator, "STD_PROP_LIST",    SPL_ARRAY_STD_PROP_LIST);
 	REGISTER_SPL_CLASS_CONST_LONG(ArrayIterator, "ARRAY_AS_PROPS",   SPL_ARRAY_ARRAY_AS_PROPS);
 
-	REGISTER_SPL_SUB_CLASS_EX(RecursiveArrayIterator, ArrayIterator, spl_array_object_new, spl_funcs_RecursiveArrayIterator);
+	REGISTER_SPL_SUB_CLASS_EX(RecursiveArrayIterator, ArrayIterator, spl_array_object_new, class_RecursiveArrayIterator_methods);
 	REGISTER_SPL_IMPLEMENTS(RecursiveArrayIterator, RecursiveIterator);
 	spl_ce_RecursiveArrayIterator->get_iterator = spl_array_get_iterator;
 	spl_ce_RecursiveArrayIterator->ce_flags |= ZEND_ACC_REUSE_GET_ITERATOR;

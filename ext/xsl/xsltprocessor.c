@@ -1,7 +1,5 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
@@ -24,82 +22,6 @@
 #include "php.h"
 #include "php_xsl.h"
 #include "ext/libxml/php_libxml.h"
-
-/* {{{ arginfo */
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_import_stylesheet, 0, 0, 1)
-	ZEND_ARG_INFO(0, doc)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_transform_to_doc, 0, 0, 1)
-	ZEND_ARG_INFO(0, doc)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_transform_to_uri, 0, 0, 2)
-	ZEND_ARG_INFO(0, doc)
-	ZEND_ARG_INFO(0, uri)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_transform_to_xml, 0, 0, 1)
-	ZEND_ARG_INFO(0, doc)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_set_parameter, 0, 0, 2)
-	ZEND_ARG_INFO(0, namespace)
-	ZEND_ARG_INFO(0, name)
-	ZEND_ARG_INFO(0, value)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_get_parameter, 0, 0, 2)
-	ZEND_ARG_INFO(0, namespace)
-	ZEND_ARG_INFO(0, name)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_remove_parameter, 0, 0, 2)
-	ZEND_ARG_INFO(0, namespace)
-	ZEND_ARG_INFO(0, name)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_has_exslt_support, 0, 0, 0)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_register_php_functions, 0, 0, 0)
-	ZEND_ARG_INFO(0, restrict)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_set_profiling, 0, 0, 1)
-	ZEND_ARG_INFO(0, filename)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_set_security_prefs, 0, 0, 1)
-	ZEND_ARG_INFO(0, securityPrefs)
-ZEND_END_ARG_INFO();
-
-ZEND_BEGIN_ARG_INFO_EX(arginfo_xsl_xsltprocessor_get_security_prefs, 0, 0, 0)
-ZEND_END_ARG_INFO();
-/* }}} */
-
-/*
-* class xsl_xsltprocessor
-*
-* URL: https://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#
-* Since:
-*/
-
-const zend_function_entry php_xsl_xsltprocessor_class_functions[] = {
-	PHP_FALIAS(importStylesheet, xsl_xsltprocessor_import_stylesheet, arginfo_xsl_xsltprocessor_import_stylesheet)
-	PHP_FALIAS(transformToDoc, xsl_xsltprocessor_transform_to_doc, arginfo_xsl_xsltprocessor_transform_to_doc)
-	PHP_FALIAS(transformToUri, xsl_xsltprocessor_transform_to_uri, arginfo_xsl_xsltprocessor_transform_to_uri)
-	PHP_FALIAS(transformToXml, xsl_xsltprocessor_transform_to_xml, arginfo_xsl_xsltprocessor_transform_to_xml)
-	PHP_FALIAS(setParameter, xsl_xsltprocessor_set_parameter, arginfo_xsl_xsltprocessor_set_parameter)
-	PHP_FALIAS(getParameter, xsl_xsltprocessor_get_parameter, arginfo_xsl_xsltprocessor_get_parameter)
-	PHP_FALIAS(removeParameter, xsl_xsltprocessor_remove_parameter, arginfo_xsl_xsltprocessor_remove_parameter)
-	PHP_FALIAS(hasExsltSupport, xsl_xsltprocessor_has_exslt_support, arginfo_xsl_xsltprocessor_has_exslt_support)
-	PHP_FALIAS(registerPHPFunctions, xsl_xsltprocessor_register_php_functions, arginfo_xsl_xsltprocessor_register_php_functions)
-	PHP_FALIAS(setProfiling, xsl_xsltprocessor_set_profiling, arginfo_xsl_xsltprocessor_set_profiling)
-	PHP_FALIAS(setSecurityPrefs, xsl_xsltprocessor_set_security_prefs, arginfo_xsl_xsltprocessor_set_security_prefs)
-	PHP_FALIAS(getSecurityPrefs, xsl_xsltprocessor_get_security_prefs, arginfo_xsl_xsltprocessor_get_security_prefs)
-	PHP_FE_END
-};
 
 /* {{{ php_xsl_xslt_string_to_xpathexpr()
    Translates a string to a XPath Expression */
@@ -150,7 +72,10 @@ static char **php_xsl_xslt_make_params(HashTable *parht, int xpath_params)
 			return NULL;
 		} else {
 			if (Z_TYPE_P(value) != IS_STRING) {
-				convert_to_string(value);
+				if (!try_convert_to_string(value)) {
+					efree(params);
+					return NULL;
+				}
 			}
 
 			if (!xpath_params) {
@@ -274,7 +199,7 @@ static void xsl_ext_function_php(xmlXPathParserContextPtr ctxt, int nargs, int t
 								node->parent = nsparent;
 								node->ns = curns;
 							} else {
-								node = xmlDocCopyNodeList(domintern->document->ptr, node);
+								node = xmlDocCopyNode(node, domintern->document->ptr, 1);
 							}
 
 							php_dom_create_object(node, &child, domintern);
@@ -323,7 +248,9 @@ static void xsl_ext_function_php(xmlXPathParserContextPtr ctxt, int nargs, int t
 	fci.no_separation = 0;
 	/*fci.function_handler_cache = &function_ptr;*/
 	if (!zend_make_callable(&handler, &callable)) {
-		php_error_docref(NULL, E_WARNING, "Unable to call handler %s()", ZSTR_VAL(callable));
+		if (!EG(exception)) {
+			php_error_docref(NULL, E_WARNING, "Unable to call handler %s()", ZSTR_VAL(callable));
+		}
 		valuePush(ctxt, xmlXPathNewString((const xmlChar *) ""));
 	} else if ( intern->registerPhpFunctions == 2 && zend_hash_exists(intern->registered_phpfunctions, callable) == 0) {
 		php_error_docref(NULL, E_WARNING, "Not allowed to call handler '%s()'", ZSTR_VAL(callable));
@@ -385,11 +312,11 @@ void xsl_ext_function_object_php(xmlXPathParserContextPtr ctxt, int nargs) /* {{
 }
 /* }}} */
 
-/* {{{ proto void xsl_xsltprocessor_import_stylesheet(domdocument doc)
+/* {{{ proto void XSLTProcessor::importStylesheet(domdocument doc)
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#
 Since:
 */
-PHP_FUNCTION(xsl_xsltprocessor_import_stylesheet)
+PHP_METHOD(XSLTProcessor, importStylesheet)
 {
 	zval *id, *docp = NULL;
 	xmlDoc *doc = NULL, *newdoc = NULL;
@@ -402,7 +329,7 @@ PHP_FUNCTION(xsl_xsltprocessor_import_stylesheet)
 
 	id = ZEND_THIS;
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &docp) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	nodep = php_libxml_import_node(docp);
@@ -469,7 +396,7 @@ PHP_FUNCTION(xsl_xsltprocessor_import_stylesheet)
 	php_xsl_set_object(id, sheetp);
 	RETVAL_TRUE;
 }
-/* }}} end xsl_xsltprocessor_import_stylesheet */
+/* }}} end XSLTProcessor::importStylesheet */
 
 static xmlDocPtr php_xsl_apply_stylesheet(zval *id, xsl_object *intern, xsltStylesheetPtr style, zval *docp) /* {{{ */
 {
@@ -612,11 +539,11 @@ static xmlDocPtr php_xsl_apply_stylesheet(zval *id, xsl_object *intern, xsltStyl
 }
 /* }}} */
 
-/* {{{ proto domdocument xsl_xsltprocessor_transform_to_doc(domnode doc)
+/* {{{ proto domdocument XSLTProcessor::transformToDoc(domnode doc)
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#
 Since:
 */
-PHP_FUNCTION(xsl_xsltprocessor_transform_to_doc)
+PHP_METHOD(XSLTProcessor, transformToDoc)
 {
 	zval *id, *docp = NULL;
 	xmlDoc *newdocp;
@@ -629,7 +556,7 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_doc)
 	sheetp = (xsltStylesheetPtr) intern->ptr;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o|S!", &docp, &ret_class) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	newdocp = php_xsl_apply_stylesheet(id, intern, sheetp, docp);
@@ -667,11 +594,11 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_doc)
 	}
 
 }
-/* }}} end xsl_xsltprocessor_transform_to_doc */
+/* }}} end XSLTProcessor::transformToDoc */
 
-/* {{{ proto int xsl_xsltprocessor_transform_to_uri(domdocument doc, string uri)
+/* {{{ proto int XSLTProcessor::transformToUri(domdocument doc, string uri)
 */
-PHP_FUNCTION(xsl_xsltprocessor_transform_to_uri)
+PHP_METHOD(XSLTProcessor, transformToUri)
 {
 	zval *id, *docp = NULL;
 	xmlDoc *newdocp;
@@ -686,7 +613,7 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_uri)
 	sheetp = (xsltStylesheetPtr) intern->ptr;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "op", &docp, &uri, &uri_len) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	newdocp = php_xsl_apply_stylesheet(id, intern, sheetp, docp);
@@ -699,11 +626,11 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_uri)
 
 	RETVAL_LONG(ret);
 }
-/* }}} end xsl_xsltprocessor_transform_to_uri */
+/* }}} end XSLTProcessor::transformToUri */
 
-/* {{{ proto string xsl_xsltprocessor_transform_to_xml(domdocument doc)
+/* {{{ proto string XSLTProcessor::transformToXml(domdocument doc)
 */
-PHP_FUNCTION(xsl_xsltprocessor_transform_to_xml)
+PHP_METHOD(XSLTProcessor, transformToXml)
 {
 	zval *id, *docp = NULL;
 	xmlDoc *newdocp;
@@ -718,7 +645,7 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_xml)
 	sheetp = (xsltStylesheetPtr) intern->ptr;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "o", &docp) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	newdocp = php_xsl_apply_stylesheet(id, intern, sheetp, docp);
@@ -737,31 +664,36 @@ PHP_FUNCTION(xsl_xsltprocessor_transform_to_xml)
 		RETURN_FALSE;
 	}
 }
-/* }}} end xsl_xsltprocessor_transform_to_xml */
+/* }}} end XSLTProcessor::transformToXml */
 
-/* {{{ proto bool xsl_xsltprocessor_set_parameter(string namespace, mixed name [, string value])
+/* {{{ proto bool XSLTProcessor::setParameter(string namespace, mixed name [, string value])
 */
-PHP_FUNCTION(xsl_xsltprocessor_set_parameter)
+PHP_METHOD(XSLTProcessor, setParameter)
 {
 
-	zval *id;
+	zval *id = ZEND_THIS;
 	zval *array_value, *entry, new_string;
 	xsl_object *intern;
 	char *namespace;
 	size_t namespace_len;
 	zend_string *string_key, *name, *value;
-	DOM_GET_THIS(id);
 
 	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "sa", &namespace, &namespace_len, &array_value) == SUCCESS) {
 		intern = Z_XSL_P(id);
 		ZEND_HASH_FOREACH_STR_KEY_VAL(Z_ARRVAL_P(array_value), string_key, entry) {
+			zval tmp;
+			zend_string *str;
+
 			if (string_key == NULL) {
 				php_error_docref(NULL, E_WARNING, "Invalid parameter array");
 				RETURN_FALSE;
 			}
-			convert_to_string_ex(entry);
-			Z_TRY_ADDREF_P(entry);
-			zend_hash_update(intern->parameter, string_key, entry);
+			str = zval_try_get_string(entry);
+			if (UNEXPECTED(!str)) {
+				RETURN_THROWS();
+			}
+			ZVAL_STR(&tmp, str);
+			zend_hash_update(intern->parameter, string_key, &tmp);
 		} ZEND_HASH_FOREACH_END();
 		RETURN_TRUE;
 	} else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "sSS", &namespace, &namespace_len, &name, &value) == SUCCESS) {
@@ -777,23 +709,21 @@ PHP_FUNCTION(xsl_xsltprocessor_set_parameter)
 	}
 
 }
-/* }}} end xsl_xsltprocessor_set_parameter */
+/* }}} end XSLTProcessor::setParameter */
 
-/* {{{ proto string xsl_xsltprocessor_get_parameter(string namespace, string name)
+/* {{{ proto string XSLTProcessor::getParameter(string namespace, string name)
 */
-PHP_FUNCTION(xsl_xsltprocessor_get_parameter)
+PHP_METHOD(XSLTProcessor, getParameter)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	char *namespace;
 	size_t namespace_len = 0;
 	zval *value;
 	zend_string *name;
 	xsl_object *intern;
 
-	DOM_GET_THIS(id);
-
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sS", &namespace, &namespace_len, &name) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 	intern = Z_XSL_P(id);
 	if ((value = zend_hash_find(intern->parameter, name)) != NULL) {
@@ -802,22 +732,20 @@ PHP_FUNCTION(xsl_xsltprocessor_get_parameter)
 		RETURN_FALSE;
 	}
 }
-/* }}} end xsl_xsltprocessor_get_parameter */
+/* }}} end XSLTProcessor::getParameter */
 
-/* {{{ proto bool xsl_xsltprocessor_remove_parameter(string namespace, string name)
+/* {{{ proto bool XSLTProcessor::removeParameter(string namespace, string name)
 */
-PHP_FUNCTION(xsl_xsltprocessor_remove_parameter)
+PHP_METHOD(XSLTProcessor, removeParameter)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	size_t namespace_len = 0;
 	char *namespace;
 	zend_string *name;
 	xsl_object *intern;
 
-	DOM_GET_THIS(id);
-
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sS", &namespace, &namespace_len, &name) == FAILURE) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 	intern = Z_XSL_P(id);
 	if (zend_hash_del(intern->parameter, name) == SUCCESS) {
@@ -826,80 +754,82 @@ PHP_FUNCTION(xsl_xsltprocessor_remove_parameter)
 		RETURN_FALSE;
 	}
 }
-/* }}} end xsl_xsltprocessor_remove_parameter */
+/* }}} end XSLTProcessor::removeParameter */
 
-/* {{{ proto void xsl_xsltprocessor_register_php_functions([mixed $restrict])
+/* {{{ proto void XSLTProcessor::registerPHPFunctions([mixed $restrict])
 */
-PHP_FUNCTION(xsl_xsltprocessor_register_php_functions)
+PHP_METHOD(XSLTProcessor, registerPHPFunctions)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	xsl_object *intern;
-	zval *array_value, *entry, new_string;
-	zend_string *name;
+	zval *entry, new_string;
+	zend_string *restrict_str = NULL;
+	HashTable *restrict_ht = NULL;
 
-	DOM_GET_THIS(id);
+	ZEND_PARSE_PARAMETERS_START(0, 1)
+		Z_PARAM_OPTIONAL
+		Z_PARAM_STR_OR_ARRAY_HT_OR_NULL(restrict_str, restrict_ht)
+	ZEND_PARSE_PARAMETERS_END();
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "a",  &array_value) == SUCCESS) {
-		intern = Z_XSL_P(id);
+	intern = Z_XSL_P(id);
 
-		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(array_value), entry) {
-			convert_to_string_ex(entry);
-			ZVAL_LONG(&new_string ,1);
-			zend_hash_update(intern->registered_phpfunctions, Z_STR_P(entry), &new_string);
+	if (restrict_ht) {
+		ZEND_HASH_FOREACH_VAL(restrict_ht, entry) {
+			zend_string *str = zval_try_get_string(entry);
+			if (UNEXPECTED(!str)) {
+				return;
+			}
+			ZVAL_LONG(&new_string, 1);
+			zend_hash_update(intern->registered_phpfunctions, str, &new_string);
+			zend_string_release(str);
 		} ZEND_HASH_FOREACH_END();
 
 		intern->registerPhpFunctions = 2;
-	} else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "S",  &name) == SUCCESS) {
-		intern = Z_XSL_P(id);
-
-		ZVAL_LONG(&new_string,1);
-		zend_hash_update(intern->registered_phpfunctions, name, &new_string);
+	} else if (restrict_str) {
+		ZVAL_LONG(&new_string, 1);
+		zend_hash_update(intern->registered_phpfunctions, restrict_str, &new_string);
 		intern->registerPhpFunctions = 2;
-
 	} else {
-		intern = Z_XSL_P(id);
 		intern->registerPhpFunctions = 1;
 	}
-
 }
-/* }}} end xsl_xsltprocessor_register_php_functions(); */
+/* }}} end XSLTProcessor::registerPHPFunctions(); */
 
-/* {{{ proto bool xsl_xsltprocessor_set_profiling(string filename) */
-PHP_FUNCTION(xsl_xsltprocessor_set_profiling)
+/* {{{ proto bool XSLTProcessor::setProfiling(string filename) */
+PHP_METHOD(XSLTProcessor, setProfiling)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	xsl_object *intern;
 	char *filename = NULL;
 	size_t filename_len;
-	DOM_GET_THIS(id);
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "p!", &filename, &filename_len) == SUCCESS) {
-		intern = Z_XSL_P(id);
-		if (intern->profiling) {
-			efree(intern->profiling);
-		}
-		if (filename != NULL) {
-			intern->profiling = estrndup(filename, filename_len);
-		} else {
-			intern->profiling = NULL;
-		}
-		RETURN_TRUE;
-	} else {
-		WRONG_PARAM_COUNT;
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "p!", &filename, &filename_len) == FAILURE) {
+		RETURN_THROWS();
 	}
-}
-/* }}} end xsl_xsltprocessor_set_profiling */
 
-/* {{{ proto int xsl_xsltprocessor_set_security_prefs(int securityPrefs) */
-PHP_FUNCTION(xsl_xsltprocessor_set_security_prefs)
+	intern = Z_XSL_P(id);
+	if (intern->profiling) {
+		efree(intern->profiling);
+	}
+	if (filename != NULL) {
+		intern->profiling = estrndup(filename, filename_len);
+	} else {
+		intern->profiling = NULL;
+	}
+
+	RETURN_TRUE;
+}
+/* }}} end XSLTProcessor::setProfiling */
+
+/* {{{ proto int XSLTProcessor::setSecurityPrefs(int securityPrefs) */
+PHP_METHOD(XSLTProcessor, setSecurityPrefs)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	xsl_object *intern;
 	zend_long securityPrefs, oldSecurityPrefs;
 
-	DOM_GET_THIS(id);
  	if (zend_parse_parameters(ZEND_NUM_ARGS(), "l", &securityPrefs) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 	intern = Z_XSL_P(id);
 	oldSecurityPrefs = intern->securityPrefs;
@@ -908,32 +838,36 @@ PHP_FUNCTION(xsl_xsltprocessor_set_security_prefs)
 	intern->securityPrefsSet = 1;
 	RETURN_LONG(oldSecurityPrefs);
 }
-/* }}} end xsl_xsltprocessor_set_security_prefs */
+/* }}} end XSLTProcessor::setSecurityPrefs */
 
-/* {{{ proto int xsl_xsltprocessor_get_security_prefs() */
-PHP_FUNCTION(xsl_xsltprocessor_get_security_prefs)
+/* {{{ proto int XSLTProcessor::getSecurityPrefs() */
+PHP_METHOD(XSLTProcessor, getSecurityPrefs)
 {
-	zval *id;
+	zval *id = ZEND_THIS;
 	xsl_object *intern;
 
-	DOM_GET_THIS(id);
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), "") == SUCCESS) {
-		intern = Z_XSL_P(id);
-		RETURN_LONG(intern->securityPrefs);
-	} else {
-		WRONG_PARAM_COUNT;
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
 	}
-}
-/* }}} end xsl_xsltprocessor_get_security_prefs */
 
-/* {{{ proto bool xsl_xsltprocessor_has_exslt_support()
+	intern = Z_XSL_P(id);
+
+	RETURN_LONG(intern->securityPrefs);
+}
+/* }}} end XSLTProcessor::getSecurityPrefs */
+
+/* {{{ proto bool XSLTProcessor::hasExsltSupport()
 */
-PHP_FUNCTION(xsl_xsltprocessor_has_exslt_support)
+PHP_METHOD(XSLTProcessor, hasExsltSupport)
 {
-#if HAVE_XSL_EXSLT
+	if (zend_parse_parameters_none() == FAILURE) {
+		RETURN_THROWS();
+	}
+
+#ifdef HAVE_XSL_EXSLT
 	RETURN_TRUE;
 #else
 	RETURN_FALSE;
 #endif
 }
-/* }}} end xsl_xsltprocessor_has_exslt_support(); */
+/* }}} end XSLTProcessor::hasExsltSupport(); */

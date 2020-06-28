@@ -2,11 +2,6 @@
 Test usort() function : usage variations - Anonymous comparison function
 --FILE--
 <?php
-/* Prototype  : bool usort(array $array_arg, string $cmp_function)
- * Description: Sort an array by values using a user-defined comparison function
- * Source code: ext/standard/array.c
- */
-
 /*
  * Pass an anonymous comparison function as $cmp_function argument to test behaviour()
  */
@@ -37,7 +32,6 @@ echo "\n-- Anonymous 'cmp_function' with parameters passed by reference --\n";
 var_dump( usort($array_arg, $cmp_function) );
 var_dump($array_arg);
 ?>
-===DONE===
 --EXPECT--
 *** Testing usort() : usage variation ***
 
@@ -68,4 +62,3 @@ array(4) {
   [3]=>
   string(9) "Pineapple"
 }
-===DONE===

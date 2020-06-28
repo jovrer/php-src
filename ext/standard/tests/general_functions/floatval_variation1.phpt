@@ -2,12 +2,6 @@
 Testing floatval() and its alias doubleval() functions : usage variations - different data types as $y arg
 --FILE--
 <?php
-/* Prototype: float floatval( mixed $var );
- * Description: Returns the float value of var.
- */
-
-
-
 // get a resource type variable
 $fp = fopen (__FILE__, "r");
 fclose($fp);
@@ -22,12 +16,12 @@ $not_float_types = array (
            "directory resource" => $dfp,
            "\"0.0\"" => "0.0", // string
            "\"1.0\"" => "1.0",
-	       "\"-1.3e3\"" => "-1.3e3",
-		   "\"bob-1.3e3\"" => "bob-1.3e3",
+           "\"-1.3e3\"" => "-1.3e3",
+           "\"bob-1.3e3\"" => "bob-1.3e3",
            "\"10 Some dollars\"" => "10 Some dollars",
-	       "\"10.2 Some Dollars\"" => "10.2 Some Dollars",
-	       "\"10.0 dollar\" + 1" => "10.0 dollar" + 1,
-		   "\"10.0 dollar\" + 1.0" => "10.0 dollar" + 1.0,
+           "\"10.2 Some Dollars\"" => "10.2 Some Dollars",
+           "\"10.0 dollar\" + 1" => "10.0 dollar" + 1,
+           "\"10.0 dollar\" + 1.0" => "10.0 dollar" + 1.0,
            "\"\"" => "",
            "true" => true,
            "NULL" => NULL,
@@ -50,7 +44,6 @@ foreach ($not_float_types as $key => $type ) {
    var_dump( doubleval($type) );
 }
 ?>
-===DONE===
 --EXPECTF--
 Notice: A non well formed numeric value encountered in %s on line %d
 
@@ -155,4 +148,3 @@ float(0)
 
 -- Iteration : null --
 float(0)
-===DONE===

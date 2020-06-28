@@ -8,10 +8,6 @@ if (substr(PHP_OS, 0, 3) != 'WIN') {
 ?>
 --FILE--
 <?php
-/* Prototype: array glob ( string $pattern [, int $flags] );
-   Description: Find pathnames matching a pattern
-*/
-
 echo "*** Testing glob() : usage variations ***\n";
 
 $file_path = __DIR__;
@@ -334,7 +330,7 @@ array(0) {
 }
 
 -- Iteration 8 --
-glob() expects parameter 1 to be a valid path, string given
+glob(): Argument #1 ($pattern) must be a valid path, string given
 
 -- Iteration 9 --
 array(0) {
@@ -437,7 +433,7 @@ array(1) {
 array(0) {
 }
 -- Iteration 8 --
-glob() expects parameter 1 to be a valid path, string given
+glob(): Argument #1 ($pattern) must be a valid path, string given
 -- Iteration 9 --
 array(0) {
 }

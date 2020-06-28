@@ -2,12 +2,6 @@
 Test get_class_methods() function : basic functionality
 --FILE--
 <?php
-/* Prototype  : proto array get_class_methods(mixed class)
- * Description: Returns an array of method names for class or class instance.
- * Source code: Zend/zend_builtin_functions.c
- * Alias to functions:
- */
-
 /*
  * Test basic behaviour with existing class and non-existent class.
  */
@@ -15,9 +9,9 @@ Test get_class_methods() function : basic functionality
 echo "*** Testing get_class_methods() : basic functionality ***\n";
 
 class C {
-	function f() {}
-	function g() {}
-	function h() {}
+    function f() {}
+    function g() {}
+    function h() {}
 }
 
 echo "Argument is class name:\n";

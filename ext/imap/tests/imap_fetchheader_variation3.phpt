@@ -6,11 +6,6 @@ require_once(__DIR__.'/skipif.inc');
 ?>
 --FILE--
 <?php
-/* Prototype  : string imap_fetchheader(resource $stream_id, int $msg_no [, int $options])
- * Description: Get the full unfiltered header for a message
- * Source code: ext/imap/php_imap.c
- */
-
 /*
  * Test if FT_UID is set by passing the following as $options argument to imap_fetchheader():
  * 1. values that equate to 1
@@ -34,16 +29,15 @@ $options = array ('1', true,
 $iterator = 1;
 imap_check($stream_id);
 foreach($options as $option) {
-	echo "\n-- Iteration $iterator --\n";
-	if(is_string(imap_fetchheader($stream_id, $msg_uid, $option))) {
-		echo "FT_UID valid\n";
-	} else {
+    echo "\n-- Iteration $iterator --\n";
+    if(is_string(imap_fetchheader($stream_id, $msg_uid, $option))) {
+        echo "FT_UID valid\n";
+    } else {
                 echo "FT_UID not valid\n";
         }
-	$iterator++;
+    $iterator++;
 }
 ?>
-===DONE===
 --CLEAN--
 <?php
 require_once(__DIR__.'/clean.inc');
@@ -67,11 +61,10 @@ FT_UID valid
 
 -- Iteration 5 --
 
-Warning: imap_fetchheader(): invalid value for the options parameter in %s on line %d
+Warning: imap_fetchheader(): Invalid value for the options parameter in %s on line %d
 FT_UID not valid
 
 -- Iteration 6 --
 
-Warning: imap_fetchheader(): invalid value for the options parameter in %s on line %d
+Warning: imap_fetchheader(): Invalid value for the options parameter in %s on line %d
 FT_UID not valid
-===DONE===

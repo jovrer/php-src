@@ -1,7 +1,5 @@
 /*
    +----------------------------------------------------------------------+
-   | PHP Version 7                                                        |
-   +----------------------------------------------------------------------+
    | Copyright (c) The PHP Group                                          |
    +----------------------------------------------------------------------+
    | This source file is subject to version 3.01 of the PHP license,      |
@@ -93,9 +91,9 @@ static void php_embed_send_header(sapi_header_struct *sapi_header, void *server_
 {
 }
 
-static void php_embed_log_message(char *message, int syslog_type_int)
+static void php_embed_log_message(const char *message, int syslog_type_int)
 {
-	fprintf (stderr, "%s\n", message);
+	fprintf(stderr, "%s\n", message);
 }
 
 static void php_embed_register_variables(zval *track_vars_array)
@@ -225,7 +223,6 @@ EMBED_SAPI_API void php_embed_shutdown(void)
 	sapi_shutdown();
 #ifdef ZTS
     tsrm_shutdown();
-	TSRMLS_CACHE_RESET();
 #endif
 	if (php_embed_module.ini_entries) {
 		free(php_embed_module.ini_entries);

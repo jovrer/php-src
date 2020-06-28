@@ -2,20 +2,14 @@
 Test intval() function : usage variation
 --FILE--
 <?php
-/* Prototype  : int intval(mixed var [, int base])
- * Description: Get the integer value of a variable using the optional base for the conversion
- * Source code: ext/standard/type.c
- * Alias to functions:
- */
-
 echo "*** Testing intval() : usage variation ***\n";
 
 // Define error handler
 function test_error_handler($err_no, $err_msg, $filename, $linenum) {
-	if (error_reporting() & $err_no) {
-		// report non-silenced errors
-		echo "Error: $err_no - $err_msg, $filename($linenum)\n";
-	}
+    if (error_reporting() & $err_no) {
+        // report non-silenced errors
+        echo "Error: $err_no - $err_msg, $filename($linenum)\n";
+    }
 }
 set_error_handler('test_error_handler');
 
@@ -29,9 +23,9 @@ unset ($unset_var);
 // define some classes
 class classWithToString
 {
-	public function __toString() {
-		return "Class A object";
-	}
+    public function __toString() {
+        return "Class A object";
+    }
 }
 
 class classWithoutToString
@@ -108,7 +102,6 @@ foreach($inputs as $key =>$value) {
 };
 
 ?>
-===DONE===
 --EXPECTF--
 *** Testing intval() : usage variation ***
 
@@ -200,4 +193,3 @@ int(0)
 
 --unset var--
 int(0)
-===DONE===

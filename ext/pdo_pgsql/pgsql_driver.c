@@ -1,7 +1,5 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
-  +----------------------------------------------------------------------+
   | Copyright (c) The PHP Group                                          |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
@@ -31,7 +29,7 @@
 #include "pdo/php_pdo_driver.h"
 #include "pdo/php_pdo_error.h"
 #include "ext/standard/file.h"
-#include "pg_config.h" /* needed for PG_VERSION */
+#undef SIZEOF_OFF_T
 #include "php_pdo_pgsql.h"
 #include "php_pdo_pgsql_int.h"
 #include "zend_exceptions.h"
@@ -124,13 +122,13 @@ static int pdo_pgsql_fetch_error_func(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *in
 /* }}} */
 
 /* {{{ pdo_pgsql_create_lob_stream */
-static size_t pgsql_lob_write(php_stream *stream, const char *buf, size_t count)
+static ssize_t pgsql_lob_write(php_stream *stream, const char *buf, size_t count)
 {
 	struct pdo_pgsql_lob_self *self = (struct pdo_pgsql_lob_self*)stream->abstract;
 	return lo_write(self->conn, self->lfd, (char*)buf, count);
 }
 
-static size_t pgsql_lob_read(php_stream *stream, char *buf, size_t count)
+static ssize_t pgsql_lob_read(php_stream *stream, char *buf, size_t count)
 {
 	struct pdo_pgsql_lob_self *self = (struct pdo_pgsql_lob_self*)stream->abstract;
 	return lo_read(self->conn, self->lfd, buf, count);
@@ -157,7 +155,7 @@ static int pgsql_lob_seek(php_stream *stream, zend_off_t offset, int whence,
 		zend_off_t *newoffset)
 {
 	struct pdo_pgsql_lob_self *self = (struct pdo_pgsql_lob_self*)stream->abstract;
-#if HAVE_PG_LO64 && ZEND_ENABLE_ZVAL_LONG64
+#if defined(HAVE_PG_LO64) && defined(ZEND_ENABLE_ZVAL_LONG64)
 	zend_off_t pos = lo_lseek64(self->conn, self->lfd, offset, whence);
 #else
 	zend_off_t pos = lo_lseek(self->conn, self->lfd, offset, whence);
@@ -256,36 +254,36 @@ static int pgsql_handle_preparer(pdo_dbh_t *dbh, const char *sql, size_t sql_len
 		execute_only = H->disable_prepares;
 	}
 
-	if (!emulate && PQprotocolVersion(H->server) > 2) {
-		stmt->supports_placeholders = PDO_PLACEHOLDER_NAMED;
-		stmt->named_rewrite_template = "$%d";
-		ret = pdo_parse_params(stmt, (char*)sql, sql_len, &nsql, &nsql_len);
-
-		if (ret == 1) {
-			/* query was re-written */
-			sql = nsql;
-		} else if (ret == -1) {
-			/* couldn't grok it */
-			strcpy(dbh->error_code, stmt->error_code);
-			return 0;
-		}
-
-		if (!execute_only) {
-			/* prepared query: set the query name and defer the
-			   actual prepare until the first execute call */
-			spprintf(&S->stmt_name, 0, "pdo_stmt_%08x", ++H->stmt_counter);
-		}
-
-		if (nsql) {
-			S->query = nsql;
-		} else {
-			S->query = estrdup(sql);
-		}
-
-		return 1;
+	if (!emulate && PQprotocolVersion(H->server) <= 2) {
+		emulate = 1;
 	}
 
-	stmt->supports_placeholders = PDO_PLACEHOLDER_NONE;
+	if (emulate) {
+		stmt->supports_placeholders = PDO_PLACEHOLDER_NONE;
+	} else {
+		stmt->supports_placeholders = PDO_PLACEHOLDER_NAMED;
+		stmt->named_rewrite_template = "$%d";
+	}
+
+	ret = pdo_parse_params(stmt, (char*)sql, sql_len, &nsql, &nsql_len);
+
+	if (ret == -1) {
+		/* couldn't grok it */
+		strcpy(dbh->error_code, stmt->error_code);
+		return 0;
+	} else if (ret == 1) {
+		/* query was re-written */
+		S->query = nsql;
+	} else {
+		S->query = estrdup(sql);
+	}
+
+	if (!emulate && !execute_only) {
+		/* prepared query: set the query name and defer the
+		   actual prepare until the first execute call */
+		spprintf(&S->stmt_name, 0, "pdo_stmt_%08x", ++H->stmt_counter);
+	}
+
 	return 1;
 }
 
@@ -378,6 +376,20 @@ static char *pdo_pgsql_last_insert_id(pdo_dbh_t *dbh, const char *name, size_t *
 	return id;
 }
 
+void pdo_libpq_version(char *buf, size_t len)
+{
+	int version = PQlibVersion();
+	int major = version / 10000;
+	if (major >= 10) {
+		int minor = version % 10000;
+		snprintf(buf, len, "%d.%d", major, minor);
+	} else {
+		int minor = version / 100 % 100;
+		int revision = version % 100;
+		snprintf(buf, len, "%d.%d.%d", major, minor, revision);
+	}
+}
+
 static int pdo_pgsql_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_value)
 {
 	pdo_pgsql_db_handle *H = (pdo_pgsql_db_handle *)dbh->driver_data;
@@ -391,9 +403,12 @@ static int pdo_pgsql_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_
 			ZVAL_BOOL(return_value, H->disable_prepares);
 			break;
 
-		case PDO_ATTR_CLIENT_VERSION:
-			ZVAL_STRING(return_value, PG_VERSION);
+		case PDO_ATTR_CLIENT_VERSION: {
+			char buf[16];
+			pdo_libpq_version(buf, sizeof(buf));
+			ZVAL_STRING(return_value, buf);
 			break;
+		}
 
 		case PDO_ATTR_SERVER_VERSION:
 			if (PQprotocolVersion(H->server) >= 3) { /* PostgreSQL 7.4 or later */
@@ -459,8 +474,8 @@ static int pdo_pgsql_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_
 					(char*)PQparameterStatus(H->server, "DateStyle"));
 
 			ZVAL_STR(return_value, str_info);
-		}
 			break;
+		}
 
 		default:
 			return 0;
@@ -473,7 +488,7 @@ static int pdo_pgsql_get_attribute(pdo_dbh_t *dbh, zend_long attr, zval *return_
 static int pdo_pgsql_check_liveness(pdo_dbh_t *dbh)
 {
 	pdo_pgsql_db_handle *H = (pdo_pgsql_db_handle *)dbh->driver_data;
-	if (PQstatus(H->server) == CONNECTION_BAD) {
+	if (!PQconsumeInput(H->server) || PQstatus(H->server) == CONNECTION_BAD) {
 		PQreset(H->server);
 	}
 	return (PQstatus(H->server) == CONNECTION_OK) ? SUCCESS : FAILURE;
@@ -548,7 +563,7 @@ static PHP_METHOD(PDO, pgsqlCopyFromArray)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sa|sss",
 					&table_name, &table_name_len, &pg_rows,
 					&pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len, &pg_fields, &pg_fields_len) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	if (!zend_hash_num_elements(Z_ARRVAL_P(pg_rows))) {
@@ -592,7 +607,10 @@ static PHP_METHOD(PDO, pgsqlCopyFromArray)
 		PQclear(pgsql_result);
 		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(pg_rows), tmp) {
 			size_t query_len;
-			convert_to_string_ex(tmp);
+			if (!try_convert_to_string(tmp)) {
+				efree(query);
+				RETURN_THROWS();
+			}
 
 			if (buffer_len < Z_STRLEN_P(tmp)) {
 				buffer_len = Z_STRLEN_P(tmp);
@@ -657,7 +675,7 @@ static PHP_METHOD(PDO, pgsqlCopyFromFile)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sp|sss",
 				&table_name, &table_name_len, &filename, &filename_len,
 				&pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len, &pg_fields, &pg_fields_len) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	/* Obtain db Handler */
@@ -758,7 +776,7 @@ static PHP_METHOD(PDO, pgsqlCopyToFile)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "sp|sss",
 					&table_name, &table_name_len, &filename, &filename_len,
 					&pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len, &pg_fields, &pg_fields_len) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	dbh = Z_PDO_DBH_P(ZEND_THIS);
@@ -851,7 +869,7 @@ static PHP_METHOD(PDO, pgsqlCopyToArray)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), "s|sss",
 		&table_name, &table_name_len,
 		&pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len, &pg_fields, &pg_fields_len) == FAILURE) {
-		return;
+		RETURN_THROWS();
 	}
 
 	dbh = Z_PDO_DBH_P(ZEND_THIS);
@@ -919,6 +937,8 @@ static PHP_METHOD(PDO, pgsqlLOBCreate)
 	pdo_pgsql_db_handle *H;
 	Oid lfd;
 
+	ZEND_PARSE_PARAMETERS_NONE();
+
 	dbh = Z_PDO_DBH_P(ZEND_THIS);
 	PDO_CONSTRUCT_CHECK;
 	PDO_DBH_CLEAR_ERR();
@@ -955,7 +975,7 @@ static PHP_METHOD(PDO, pgsqlLOBOpen)
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), "s|s",
 				&oidstr, &oidstrlen, &modestr, &modestrlen)) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	oid = (Oid)strtoul(oidstr, &end_ptr, 10);
@@ -1002,7 +1022,7 @@ static PHP_METHOD(PDO, pgsqlLOBUnlink)
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), "s",
 				&oidstr, &oidlen)) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	oid = (Oid)strtoul(oidstr, &end_ptr, 10);
@@ -1027,7 +1047,7 @@ static PHP_METHOD(PDO, pgsqlLOBUnlink)
 /* }}} */
 
 /* {{{ proto mixed PDO::pgsqlGetNotify([ int $result_type = PDO::FETCH_USE_DEFAULT] [, int $ms_timeout = 0 ]])
-   Get asyncronous notification */
+   Get asynchronous notification */
 static PHP_METHOD(PDO, pgsqlGetNotify)
 {
 	pdo_dbh_t *dbh;
@@ -1038,7 +1058,7 @@ static PHP_METHOD(PDO, pgsqlGetNotify)
 
 	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), "|ll",
 				&result_type, &ms_timeout)) {
-		RETURN_FALSE;
+		RETURN_THROWS();
 	}
 
 	dbh = Z_PDO_DBH_P(ZEND_THIS);
@@ -1056,22 +1076,30 @@ static PHP_METHOD(PDO, pgsqlGetNotify)
 	if (ms_timeout < 0) {
 		php_error_docref(NULL, E_WARNING, "Invalid timeout");
  		RETURN_FALSE;
-#if ZEND_ENABLE_ZVAL_LONG64
+#ifdef ZEND_ENABLE_ZVAL_LONG64
 	} else if (ms_timeout > INT_MAX) {
-		php_error_docref(NULL, E_WARNING, "timeout was shrunk to %d", INT_MAX);
+		php_error_docref(NULL, E_WARNING, "Timeout was shrunk to %d", INT_MAX);
 		ms_timeout = INT_MAX;
 #endif
 	}
 
 	H = (pdo_pgsql_db_handle *)dbh->driver_data;
 
-	PQconsumeInput(H->server);
+	if (!PQconsumeInput(H->server)) {
+		pdo_pgsql_error(dbh, PGRES_FATAL_ERROR, NULL);
+		PDO_HANDLE_DBH_ERR();
+		RETURN_FALSE;
+	}
 	pgsql_notify = PQnotifies(H->server);
 
 	if (ms_timeout && !pgsql_notify) {
 		php_pollfd_for_ms(PQsocket(H->server), PHP_POLLREADABLE, (int)ms_timeout);
 
-		PQconsumeInput(H->server);
+		if (!PQconsumeInput(H->server)) {
+			pdo_pgsql_error(dbh, PGRES_FATAL_ERROR, NULL);
+			PDO_HANDLE_DBH_ERR();
+			RETURN_FALSE;
+		}
 		pgsql_notify = PQnotifies(H->server);
 	}
 
@@ -1105,6 +1133,8 @@ static PHP_METHOD(PDO, pgsqlGetPid)
 {
 	pdo_dbh_t *dbh;
 	pdo_pgsql_db_handle *H;
+
+	ZEND_PARSE_PARAMETERS_NONE();
 
 	dbh = Z_PDO_DBH_P(ZEND_THIS);
 	PDO_CONSTRUCT_CHECK;

@@ -2,11 +2,6 @@
 Test array_filter() function : usage variations - anonymous callback functions
 --FILE--
 <?php
-/* Prototype  : array array_filter(array $input [, callback $callback])
- * Description: Filters elements from the array via the callback.
- * Source code: ext/standard/array.c
-*/
-
 /*
 * Passing different anonymous callback functions with passed by value and reference arguments
 */
@@ -24,7 +19,7 @@ echo "Anonymous callback function with reference parameter\n";
 var_dump( array_filter($input, function(&$input) { return ($input < 1); }) );
 
 // anonymous callback function with null argument
-echo "Anonymous callback funciton with null argument\n";
+echo "Anonymous callback function with null argument\n";
 var_dump( array_filter($input, function() { return true; }) );
 
 // anonymous callback function with argument and null statement
@@ -55,7 +50,7 @@ array(4) {
   [7]=>
   NULL
 }
-Anonymous callback funciton with null argument
+Anonymous callback function with null argument
 array(8) {
   [0]=>
   int(0)

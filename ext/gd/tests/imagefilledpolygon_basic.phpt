@@ -7,12 +7,6 @@ imagefilledpolygon()
 --FILE--
 <?php
 
-/* Prototype  : bool imagefilledpolygon  ( resource $image  , array $points  , int $num_points  , int $color  )
- * Description: Draws a filled polygon.
- * Source code: ext/standard/image.c
- * Alias to functions:
- */
-
 echo "Simple test of imagefilledpolygon() function\n";
 
 $dest = dirname(realpath(__FILE__)) . '/imagefilledpolygon.png';
@@ -36,7 +30,7 @@ $bg = imagecolorallocate($image, 0, 0, 0);
 $col_poly = imagecolorallocate($image, 0, 255, 0);
 
 // draw the polygon
-imagefilledpolygon($image, $points, count($points)/2, $col_poly);
+imagefilledpolygon($image, $points, $col_poly);
 
 // output the picture to a file
 imagepng($image, $dest);

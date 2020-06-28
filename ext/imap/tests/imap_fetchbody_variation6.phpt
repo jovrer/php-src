@@ -6,11 +6,6 @@ require_once(__DIR__.'/skipif.inc');
 ?>
 --FILE--
 <?php
-/* Prototype  : string imap_fetchbody(resource $stream_id, int $msg_no, string $section [, int $options])
- * Description: Get a specific body section
- * Source code: ext/imap/php_imap.c
- */
-
 /*
  * Pass different integers, strings, msg sequences and msg UIDs as $msg_no argument
  * to test behaviour of imap_fetchbody()
@@ -29,14 +24,13 @@ $sequences = array (0,     4, // out of range
                    );
 
 foreach($sequences as $msg_no) {
-	echo "\n-- \$msg_no is $msg_no --\n";
-	var_dump($overview = imap_fetchbody($stream_id, $msg_no, $section));
-	if (!$overview) {
-		echo imap_last_error() . "\n";
-	}
+    echo "\n-- \$msg_no is $msg_no --\n";
+    var_dump($overview = imap_fetchbody($stream_id, $msg_no, $section));
+    if (!$overview) {
+        echo imap_last_error() . "\n";
+    }
 }
 ?>
-===DONE===
 --CLEAN--
 <?php
 require_once(__DIR__.'/clean.inc');
@@ -67,4 +61,3 @@ string(%d) "1: this is a test message, please ignore%a"
 
 Notice: A non well formed numeric value encountered in %s on line %d
 string(%d) "1: this is a test message, please ignore%a"
-===DONE===

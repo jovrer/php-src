@@ -6,11 +6,6 @@ require_once(__DIR__.'/skipif.inc');
 ?>
 --FILE--
 <?php
-/* Prototype  : string imap_fetchbody(resource $stream_id, int $msg_no, string $section [, int $options])
- * Description: Get a specific body section
- * Source code: ext/imap/php_imap.c
- */
-
 /*
  * Test if FT_UID is set by passing the following as $options argument to imap_fetchbody():
  * 1. values that equate to 1
@@ -35,17 +30,16 @@ $options = array ('1', true,
 $iterator = 1;
 imap_check($stream_id);
 foreach($options as $option) {
-	echo "\n-- Iteration $iterator --\n";
-	if(is_string(imap_fetchbody($stream_id, $msg_uid, $section, $option))) {
-		echo "FT_UID valid\n";
-	} else {
+    echo "\n-- Iteration $iterator --\n";
+    if(is_string(imap_fetchbody($stream_id, $msg_uid, $section, $option))) {
+        echo "FT_UID valid\n";
+    } else {
                 echo "FT_UID not valid\n";
         }
-	$iterator++;
+    $iterator++;
 }
 
 ?>
-===DONE===
 --CLEAN--
 <?php
 require_once(__DIR__.'/clean.inc');
@@ -69,11 +63,10 @@ FT_UID valid
 
 -- Iteration 5 --
 
-Warning: imap_fetchbody(): invalid value for the options parameter in %s on line %d
+Warning: imap_fetchbody(): Invalid value for the options parameter in %s on line %d
 FT_UID not valid
 
 -- Iteration 6 --
 
-Warning: imap_fetchbody(): invalid value for the options parameter in %s on line %d
+Warning: imap_fetchbody(): Invalid value for the options parameter in %s on line %d
 FT_UID not valid
-===DONE===

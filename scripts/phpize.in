@@ -9,7 +9,8 @@ includedir="`eval echo @includedir@`/php"
 builddir="`pwd`"
 SED="@SED@"
 
-FILES_BUILD="php.m4 shtool libtool.m4 ax_check_compile_flag.m4 ax_gcc_func_attribute.m4 php_cxx_compile_stdcxx.m4 pkg.m4 config.guess config.sub ltmain.sh Makefile.global"
+FILES_BUILD="php.m4 shtool libtool.m4 ax_check_compile_flag.m4 ax_gcc_func_attribute.m4 php_cxx_compile_stdcxx.m4 pkg.m4 \
+    config.guess config.sub ltmain.sh Makefile.global gen_stub.php"
 FILES="run-tests*.php"
 CLEAN_FILES="$FILES *.o *.lo *.la .libs/ build/ modules/ \
 	config.nice configure configure.ac \
@@ -163,10 +164,6 @@ phpize_autotools()
 
   $PHP_AUTOCONF   || exit 1
   $PHP_AUTOHEADER || exit 1
-
-  # Disable PACKAGE_* symbols in config.h.in
-  $SED -e 's/^#undef PACKAGE_[^ ]*/\/\* & \*\//g' < config.h.in > config.h.in.tmp
-  mv config.h.in.tmp config.h.in
 }
 
 # Main script

@@ -8,10 +8,6 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 ?>
 --FILE--
 <?php
-/* Prototype: bool is_executable ( string $filename );
-   Description: Tells whether the filename is executable
-*/
-
 /* test is_executable() with file having different filepath notation */
 
 require __DIR__.'/file.inc';
@@ -67,7 +63,7 @@ echo "Done\n";
 unlink(__DIR__."/is_executable_variation1/bar.tmp");
 rmdir(__DIR__."/is_executable_variation1/");
 ?>
---EXPECTF--
+--EXPECT--
 *** Testing is_executable(): usage variations ***
 -- Iteration 1 --
 bool(false)
@@ -80,9 +76,9 @@ bool(false)
 -- Iteration 5 --
 bool(false)
 -- Iteration 6 --
-is_executable() expects parameter 1 to be a valid path, string given
+is_executable(): Argument #1 ($filename) must be a valid path, string given
 -- Iteration 7 --
-is_executable() expects parameter 1 to be a valid path, string given
+is_executable(): Argument #1 ($filename) must be a valid path, string given
 -- Iteration 8 --
 bool(false)
 -- Iteration 9 --

@@ -4,10 +4,6 @@ Test fileowner() function: usage variations - diff. path notations
 Dave Kelsey <d_kelsey@uk.ibm.com>
 --FILE--
 <?php
-/* Prototype: int fileowner ( string $filename )
- * Description: Returns the user ID of the owner of the file, or
- *              FALSE in case of an error.
- */
 
 /* Passing file names with different notations, using slashes, wild-card chars */
 
@@ -79,8 +75,8 @@ bool(false)
 Warning: fileowner(): stat failed for %s/fileowner_variation3/fileowner*.tmp in %s on line %d
 bool(false)
 - Iteration 7 -
-fileowner() expects parameter 1 to be a valid path, string given
+fileowner(): Argument #1 ($filename) must be a valid path, string given
 - Iteration 8 -
-fileowner() expects parameter 1 to be a valid path, string given
+fileowner(): Argument #1 ($filename) must be a valid path, string given
 
 *** Done ***

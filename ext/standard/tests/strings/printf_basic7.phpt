@@ -8,11 +8,6 @@ if (PHP_INT_SIZE != 4) {
 ?>
 --FILE--
 <?php
-/* Prototype  : int printf  ( string $format  [, mixed $args  [, mixed $...  ]] )
- * Description: Produces output according to format .
- * Source code: ext/standard/formatted_print.c
- */
-
 echo "*** Testing printf() : basic functionality - using unsigned format ***\n";
 
 
@@ -46,7 +41,6 @@ echo "\n";
 var_dump($result);
 
 ?>
-===DONE===
 --EXPECT--
 *** Testing printf() : basic functionality - using unsigned format ***
 
@@ -65,4 +59,3 @@ int(21)
 -- Calling printf() with three arguments --
 4294966185 4293732729 2345432
 int(29)
-===DONE===

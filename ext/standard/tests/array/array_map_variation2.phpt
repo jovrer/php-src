@@ -3,11 +3,6 @@ Test array_map() function : usage variations - references
 --FILE--
 <?php
 
-/* Prototype  : array array_map(mixed callback, array input1 [, array input2 ,...])
- * Description: Applies the callback to the elements in given arrays.
- * Source code: ext/standard/array.c
-*/
-
 echo "*** Testing array_map() : references ***\n";
 $arr = array("k1" => "v1","k2"=>"v2");
 $arr[]=&$arr["k1"];
@@ -38,16 +33,7 @@ array(4) {
   [0]=>
   &string(2) "v1"
   [1]=>
-  &array(4) {
-    ["k1"]=>
-    &string(2) "v1"
-    ["k2"]=>
-    string(2) "v2"
-    [0]=>
-    &string(2) "v1"
-    [1]=>
-    *RECURSION*
-  }
+  *RECURSION*
 }
 array(4) {
   ["k1"]=>
@@ -91,16 +77,7 @@ array(4) {
   [0]=>
   &string(2) "v1"
   [1]=>
-  &array(4) {
-    ["k1"]=>
-    &string(2) "v1"
-    ["k2"]=>
-    string(2) "v2"
-    [0]=>
-    &string(2) "v1"
-    [1]=>
-    *RECURSION*
-  }
+  *RECURSION*
 }
 array(4) {
   [0]=>
@@ -141,16 +118,7 @@ array(4) {
   [0]=>
   &string(2) "v1"
   [1]=>
-  &array(4) {
-    ["k1"]=>
-    &string(2) "v1"
-    ["k2"]=>
-    string(2) "v2"
-    [0]=>
-    &string(2) "v1"
-    [1]=>
-    *RECURSION*
-  }
+  *RECURSION*
 }
 array(4) {
   [0]=>

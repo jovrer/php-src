@@ -8,14 +8,7 @@ if (!extension_loaded("xml")) {
 ?>
 --FILE--
 <?php
-/* Prototype  : proto int xml_parser_set_option(resource parser, int option, mixed value)
- * Description: Set options in an XML parser
- * Source code: ext/xml/xml.c
- * Alias to functions:
- */
-
 echo "*** Testing xml_parser_set_option() : usage variations ***\n";
-error_reporting(E_ALL & ~E_NOTICE);
 
 class aClass {
    function __toString() {
@@ -79,12 +72,6 @@ $values = array(
 
       // resource data
       $fp,
-
-      // undefined data
-      $undefined_var,
-
-      // unset data
-      $unset_var,
 );
 
 // loop through each element of the array for value
@@ -174,14 +161,10 @@ Arg value string
 bool(true)
 
 Arg value Some Ascii Data 
+
+Notice: Object of class aClass could not be converted to int in %s on line %d
 bool(true)
 
 Arg value Resource id %s
-bool(true)
-
-Arg value  
-bool(true)
-
-Arg value  
 bool(true)
 Done

@@ -9,11 +9,6 @@ Test strptime() function : basic functionality
 ?>
 --FILE--
 <?php
-/* Prototype  : array strptime  ( string $date  , string $format  )
- * Description:  Parse a time/date generated with strftime()
- * Source code: ext/standard/datetime.c
-*/
-
 $orig = setlocale(LC_ALL, 'C');
 date_default_timezone_set("GMT");
 
@@ -33,7 +28,6 @@ var_dump(strptime($str, '%A %B %e %R'));
 
 setlocale(LC_ALL, $orig);
 ?>
-===DONE===
 --EXPECT--
 *** Testing strptime() : basic functionality ***
 array(9) {
@@ -96,4 +90,3 @@ array(9) {
   ["unparsed"]=>
   string(0) ""
 }
-===DONE===

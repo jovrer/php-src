@@ -1,7 +1,5 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
-  +----------------------------------------------------------------------+
   | Copyright (c) The PHP Group                                          |
   +----------------------------------------------------------------------+
   | This source file is subject to version 3.01 of the PHP license,      |
@@ -122,7 +120,6 @@ MYSQLND_METHOD(mysqlnd_stmt, store_result)(MYSQLND_STMT * const s)
 	} else {
 		COPY_CLIENT_ERROR(conn->error_info, result->stored_data->error_info);
 		stmt->result->m.free_result_contents(stmt->result);
-		mysqlnd_mempool_destroy(stmt->result->memory_pool);
 		stmt->result = NULL;
 		stmt->state = MYSQLND_STMT_PREPARED;
 	}
@@ -341,7 +338,6 @@ mysqlnd_stmt_prepare_read_eof(MYSQLND_STMT * s)
 	if (FAIL == (ret = PACKET_READ(conn, &fields_eof))) {
 		if (stmt->result) {
 			stmt->result->m.free_result_contents(stmt->result);
-			mnd_efree(stmt->result);
 			/* XXX: This will crash, because we will null also the methods.
 				But seems it happens in extreme cases or doesn't. Should be fixed by exporting a function
 				(from mysqlnd_driver.c?) to do the reset.
@@ -1303,7 +1299,7 @@ MYSQLND_METHOD(mysqlnd_stmt, send_long_data)(MYSQLND_STMT * const s, unsigned in
 		  max_allowed_packet_size on the server and resending the data.
 		*/
 #ifdef MYSQLND_DO_WIRE_CHECK_BEFORE_COMMAND
-#if HAVE_USLEEP && !defined(PHP_WIN32)
+#if defined(HAVE_USLEEP) && !defined(PHP_WIN32)
 		usleep(120000);
 #endif
 		if ((packet_len = conn->protocol_frame_codec->m.consume_uneaten_data(conn->protocol_frame_codec, COM_STMT_SEND_LONG_DATA))) {
@@ -1800,8 +1796,8 @@ MYSQLND_METHOD(mysqlnd_stmt, attr_set)(MYSQLND_STMT * const s,
 			break;
 		}
 		case STMT_ATTR_CURSOR_TYPE: {
-			unsigned int ival = *(unsigned int *) value;
-			if (ival > (zend_ulong) CURSOR_TYPE_READ_ONLY) {
+			unsigned long ival = *(unsigned long *) value;
+			if (ival > (unsigned long) CURSOR_TYPE_READ_ONLY) {
 				SET_CLIENT_ERROR(stmt->error_info, CR_NOT_IMPLEMENTED, UNKNOWN_SQLSTATE, "Not implemented");
 				DBG_INF("FAIL");
 				DBG_RETURN(FAIL);
@@ -1810,7 +1806,7 @@ MYSQLND_METHOD(mysqlnd_stmt, attr_set)(MYSQLND_STMT * const s,
 			break;
 		}
 		case STMT_ATTR_PREFETCH_ROWS: {
-			unsigned int ival = *(unsigned int *) value;
+			unsigned long ival = *(unsigned long *) value;
 			if (ival == 0) {
 				ival = MYSQLND_DEFAULT_PREFETCH_ROWS;
 			} else if (ival > 1) {
@@ -1849,10 +1845,10 @@ MYSQLND_METHOD(mysqlnd_stmt, attr_get)(const MYSQLND_STMT * const s,
 			*(zend_bool *) value= stmt->update_max_length;
 			break;
 		case STMT_ATTR_CURSOR_TYPE:
-			*(zend_ulong *) value= stmt->flags;
+			*(unsigned long *) value= stmt->flags;
 			break;
 		case STMT_ATTR_PREFETCH_ROWS:
-			*(zend_ulong *) value= stmt->prefetch_rows;
+			*(unsigned long *) value= stmt->prefetch_rows;
 			break;
 		default:
 			DBG_RETURN(FAIL);

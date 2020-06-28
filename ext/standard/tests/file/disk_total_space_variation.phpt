@@ -1,14 +1,9 @@
 --TEST--
 Testing disk_total_space() functions : Usage Variations.
+--CONFLICTS--
+disk_total_space
 --FILE--
 <?php
-/*
- *  Prototype: float disk_total_space( string directory )
- *  Description: given a string containing a directory, this function
- *               will return the total number of bytes on the corresponding
- *               filesystem or disk partition.
- */
-
 $file_path = __DIR__;
 
 echo "*** Testing with a directory ***\n";
@@ -100,16 +95,16 @@ float(%d)
 float(%d)
 
 -- Iteration 9 --
-disk_total_space() expects parameter 1 to be a valid path, string given
+disk_total_space(): Argument #1 ($directory) must be a valid path, string given
 
 -- Iteration 10 --
-disk_total_space() expects parameter 1 to be a valid path, string given
+disk_total_space(): Argument #1 ($directory) must be a valid path, string given
 
 -- Iteration 11 --
-disk_total_space() expects parameter 1 to be a valid path, string given
+disk_total_space(): Argument #1 ($directory) must be a valid path, string given
 
 -- Iteration 12 --
-disk_total_space() expects parameter 1 to be a valid path, string given
+disk_total_space(): Argument #1 ($directory) must be a valid path, string given
 *** Testing with Binary Input ***
 float(%s)
 

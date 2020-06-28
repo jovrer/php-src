@@ -19,6 +19,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__FreeBSD__)
+#include <sys/sysctl.h>
+#elif defined(__HAIKU__)
+#include <kernel/image.h>
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -46,7 +51,41 @@ void zend_elf_load_symbols(void)
 	zend_elf_header hdr;
 	zend_elf_sectheader sect;
 	int i;
+#if defined(__linux__)
 	int fd = open("/proc/self/exe", O_RDONLY);
+#elif defined(__NetBSD__)
+	int fd = open("/proc/curproc/exe", O_RDONLY);
+#elif defined(__FreeBSD__)
+	char path[PATH_MAX];
+	size_t pathlen = sizeof(path);
+	int mib[4] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
+	if (sysctl(mib, 4, path, &pathlen, NULL, 0) == -1) {
+		return;
+	}
+	int fd = open(path, O_RDONLY);
+#elif defined(__sun)
+	const char *path = getexecname();
+	int fd = open(path, O_RDONLY);
+#elif defined(__HAIKU__)
+	image_info ii;
+	int32_t ic = 0;
+
+	while (get_next_image_info(0, &ic, &ii) == B_OK) {
+		if (ii.type == B_APP_IMAGE) {
+			break;
+		}
+	}
+
+	if (ii.type != B_APP_IMAGE) {
+		return;
+	}
+
+	int fd = open(ii.name, O_RDONLY);
+#else
+	// To complete eventually for other ELF platforms.
+	// Otherwise APPLE is Mach-O
+	int fd = -1;
+#endif
 
 	if (fd >= 0) {
 		if (read(fd, &hdr, sizeof(hdr)) == sizeof(hdr)

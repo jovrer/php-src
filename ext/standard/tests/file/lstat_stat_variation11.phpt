@@ -9,13 +9,6 @@ if (substr(PHP_OS, 0, 3) == 'WIN') {
 ?>
 --FILE--
 <?php
-/* Prototype: array lstat ( string $filename );
-   Description: Gives information about a file or symbolic link
-
-   Prototype: array stat ( string $filename );
-   Description: Gives information about a file
-*/
-
 $file_path = __DIR__;
 require "$file_path/file.inc";
 
@@ -31,7 +24,7 @@ echo "*** Testing stat() on a file after using is_file() on it ***\n";
 $old_stat = stat($filename);
 // clear the stat
 clearstatcache();
-sleep(2);
+sleep(1);
 var_dump( is_file($filename) );
 $new_stat = stat($filename);
 // compare self stats

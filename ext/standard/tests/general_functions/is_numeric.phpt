@@ -2,10 +2,6 @@
 Test is_numeric() function
 --FILE--
 <?php
-/* Prototype: bool is_numeric ( mixed $var );
- * Description: Finds whether a variable is a number or a numeric string
- */
-
 echo "*** Testing is_numeric() with valid numeric values ***\n";
 // different valid numeric  values
 $numerics = array(
@@ -152,7 +148,7 @@ fclose($fp);
 closedir($dfp);
 
 ?>
---EXPECTF--
+--EXPECT--
 *** Testing is_numeric() with valid numeric values ***
 -- Iteration 1 --
 bool(true)

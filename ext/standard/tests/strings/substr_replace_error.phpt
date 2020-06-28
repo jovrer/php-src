@@ -2,11 +2,6 @@
 Test substr_replace() function : error conditions
 --FILE--
 <?php
-/* Prototype  : mixed substr_replace  ( mixed $string  , string $replacement  , int $start  [, int $length  ] )
- * Description: Replace text within a portion of a string
- * Source code: ext/standard/string.c
-*/
-
 /*
  * Testing substr_replace() for error conditions
 */
@@ -26,7 +21,6 @@ echo "\n-- Testing substr_replace() function with start and length as arrays but
 var_dump(substr_replace($s1, "evening", array(5), array(8)));
 
 ?>
-===DONE===
 --EXPECTF--
 *** Testing substr_replace() : error conditions ***
 
@@ -47,4 +41,3 @@ string(12) "Good morning"
 
 Warning: substr_replace(): Functionality of 'start' and 'length' as arrays is not implemented in %s on line %d
 string(12) "Good morning"
-===DONE===

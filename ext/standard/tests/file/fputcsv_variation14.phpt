@@ -2,11 +2,6 @@
 Test fputcsv() : usage variations - with enclosure & delimiter of two chars(read only modes)
 --FILE--
 <?php
-/*
- Prototype: array fputcsv ( resource $handle , array $fields [, string $delimiter [, string $enclosure]]] );
- Description: Format line as CSV and write to the file pointer
-*/
-
 /* Testing fputcsv() to write to a file when default enclosure value and delimiter
    of two chars is provided and file is opened in read only mode */
 
@@ -89,7 +84,9 @@ echo "Done\n";
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 12 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -99,7 +96,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 12 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -109,7 +108,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 12 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -119,7 +120,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 15 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -129,7 +132,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 15 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -139,7 +144,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 15 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -149,7 +156,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -159,7 +168,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -169,7 +180,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -179,7 +192,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -189,7 +204,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -199,7 +216,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -209,7 +228,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -219,7 +240,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -229,7 +252,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -239,7 +264,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -249,7 +276,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -259,7 +288,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 16 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -269,7 +300,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -279,7 +312,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -289,7 +324,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 18 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -299,7 +336,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 22 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -309,7 +348,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 22 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -319,7 +360,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 22 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -329,7 +372,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 24 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -339,7 +384,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 24 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""
@@ -349,7 +396,9 @@ string(0) ""
 Notice: fputcsv(): delimiter must be a single character in %s on line %d
 
 Notice: fputcsv(): enclosure must be a single character in %s on line %d
-int(0)
+
+Notice: fputcsv(): Write of 24 bytes failed with errno=9 Bad file descriptor in %s on line %d
+bool(false)
 int(0)
 bool(false)
 string(0) ""

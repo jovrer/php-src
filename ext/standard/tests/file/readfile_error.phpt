@@ -2,10 +2,6 @@
 Test readfile() function: error conditions
 --FILE--
 <?php
-/* Prototype: int readfile ( string $filename [, bool $use_include_path [, resource $context]] );
-   Description: Outputs a file
-*/
-
 $context = stream_context_create();
 
 echo "*** Test readfile(): error conditions ***\n";
@@ -38,6 +34,6 @@ bool(false)
 
 -- Testing readfile() with non-existent file --
 
-Warning: readfile(%s/non_existent_file.tmp): failed to open stream: %s in %s on line %d
+Warning: readfile(%s/non_existent_file.tmp): Failed to open stream: %s in %s on line %d
 bool(false)
 Done
